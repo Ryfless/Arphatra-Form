@@ -1,0 +1,394 @@
+/* ============================= */
+/* COLORS VARIABLES - STYLE GUIDE */
+/* ============================= */
+:root {
+  /* Main Colors */
+  --color-vanilla: #F1EADA; /* Vanilla */
+  --color-rice: #F6F8ED;    /* Rice */
+
+  /* Secondary Colors */
+  --color-mahogany: #584738; /* Mahogany */
+
+  /* Optional Colors */
+  --color-mountain: #AAA396; /* Mountain */
+  --color-sand: #CEC1A8;     /* Sand */
+  --color-tobacco: #B59E7D;  /* Tobacco */
+
+  /* Shadows */
+  --shadow-default: 0 4px 4px 0 rgba(0,0,0,0.25);
+  --shadow-btn-hover: 0 8px 20px rgba(88, 71, 56, 0.35);
+  --shadow-google-btn-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Font Colors */
+  --text-default: var(--color-mahogany);
+  --text-fade: var(--color-tobacco);
+  --placeholder: var(--color-tobacco);
+
+  /* Button Colors */
+  --btn-bg: var(--color-mahogany);
+  --btn-text: var(--color-vanilla);
+  --btn-hover-bg: #3a2e26;
+
+  /* Icon Colors */
+  --icon-default: var(--color-mahogany);
+  --icon-hover: var(--color-rice);
+
+  /* Other Colors */
+  --divider: #ddd;
+  --divider-text: #999;
+  --google-btn-border: #ddd;
+  --google-btn-bg-hover: #fafaf9;
+}
+
+/* ============================= */
+/* GLOBAL STYLES */
+/* ============================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--color-rice);
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+header {
+    background-color: transparent;
+    padding: 2rem 3rem 0.8rem 3rem;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+header h1 {
+    color: var(--text-default);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+header svg {
+    width: 32px;
+    height: 32px;
+    color: #7c2d12; /* optional: bisa dijadikan var juga */
+}
+
+/* ============================= */
+/* CONTAINER & FORM WRAPPER */
+/* ============================= */
+.container {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+/* ============================= */
+/* FORM SECTION */
+/* ============================= */
+.form-section {
+    flex: 1;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 450px;
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+.form-section h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-default);
+    margin-bottom: 0.5rem;
+}
+
+.form-section p {
+    color: var(--text-default);
+    margin-bottom: 2rem;
+    font-size: 1.05rem;
+}
+
+/* ============================= */
+/* FORM ELEMENTS */
+/* ============================= */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.form-group label {
+    color: var(--text-fade);
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: none;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    padding-right: 2.5rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    outline: none;
+    border-color: var(--text-default);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 0 3px rgba(88, 71, 56, 0.1);
+}
+
+input::placeholder {
+    color: var(--placeholder);
+}
+
+/* ============================= */
+/* EYE ICON */
+/* ============================= */
+.eye-icon {
+    position: absolute;
+    right: 1rem;
+    cursor: pointer;
+    color: #999;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+}
+
+.eye-icon:hover {
+    color: var(--text-default);
+}
+
+/* ============================= */
+/* BUTTONS */
+/* ============================= */
+button[type="submit"] {
+    padding: 0.9rem 1.5rem;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+button[type="submit"]:hover {
+    background: var(--btn-hover-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-btn-hover);
+}
+
+/* ============================= */
+/* FORM FOOTER LINKS */
+/* ============================= */
+.form-footer {
+    margin-top: 1rem;
+    text-align: center;
+    color: var(--text-fade);
+    font-size: 0.9rem;
+}
+
+.form-footer a {
+    color: var(--text-default);
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.form-footer a:hover {
+    color: #3a3a3a;
+}
+
+/* ============================= */
+/* BANNER SECTION */
+/* ============================= */
+.banner-section {
+    flex: 1;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 450px;
+    border-radius: 0;
+    margin: 0;
+}
+
+.banner-section img {
+    width: 100%;
+    height: 90%;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+.banner-text {
+    display: none;
+}
+
+.banner-text strong {
+    color: #3a3a3a;
+    font-weight: 600;
+}
+
+/* ============================= */
+/* DIVIDER */
+/* ============================= */
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    gap: 1rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--divider);
+}
+
+.divider-text {
+    color: var(--divider-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ============================= */
+/* GOOGLE LOGIN BUTTON */
+/* ============================= */
+/* ============================= */
+/* GOOGLE LOGIN BUTTON - CUSTOM COLORS */
+/* ============================= */
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.9rem;
+    border: 2px solid var(--color-vanilla);
+    border-radius: 30px;
+    background: var(--color-rice);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-default);
+    text-decoration: none;
+}
+
+.google-login-btn:hover {
+    background: var(--color-rice);
+    border-color: var(--color-mahogany);
+    box-shadow: var(--shadow-google-btn-hover);
+}
+
+.google-login-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+.slide-in-left {
+    animation: slideInLeft 0.6s ease-out forwards;
+}
+
+.slide-out-left {
+    animation: slideOutLeft 0.6s ease-out forwards;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.6s ease-out forwards;
+}
+
+.slide-out-right {
+    animation: slideOutRight 0.6s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+@media (max-width: 768px) {
+    .form-wrapper { flex-direction: column; }
+    .form-section,
+    .banner-section { flex: 100%; min-height: auto; }
+    .banner-section { min-height: 300px; display: none; }
+    .form-section { padding: 2rem; }
+    header { padding: 1rem; }
+}

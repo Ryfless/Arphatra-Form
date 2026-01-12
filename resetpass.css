@@ -1,0 +1,230 @@
+/* ============================= */
+/* RESET PASSWORD SPECIFIC STYLES */
+/* ============================= */
+
+body.resetpass {
+    background: url('../images/background-collected.png') no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Header */
+.resetpass-header {
+    background-color: transparent;
+    padding: 2rem 3rem 1rem 3rem;
+    display: flex;
+    align-items: center;
+    box-shadow: none;
+    border-bottom: none;
+}
+
+.resetpass-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.resetpass-header .logo svg {
+    width: 32px;
+    height: 32px;
+    color: var(--text-default);
+    stroke-width: 2;
+}
+
+.resetpass-header .logo span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-default);
+    letter-spacing: 0.3px;
+}
+
+/* Main Content */
+.resetpass-main {
+    padding: 2rem 3rem 3rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+}
+
+.resetpass-container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Reset Password Card */
+.resetpass-card {
+    background: var(--color-vanilla);
+    padding: 3rem;
+    border-radius: 45px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+}
+
+.resetpass-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-default);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.resetpass-description {
+    font-size: 0.95rem;
+    color: var(--text-default);
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+/* Form */
+.resetpass-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+}
+
+/* Form Group */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.form-helper {
+    font-size: 0.85rem;
+    color: var(--text-default);
+    margin: 0.5rem 0 0.3rem 0;
+    font-weight: 400;
+}
+
+/* Password Input */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.resetpass-input {
+    width: 100%;
+    padding: 1rem 2.5rem 1rem 1rem;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    border: 2px solid var(--text-default);
+    border-radius: 25px;
+    background: transparent;
+    color: var(--color-tobacco);
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.resetpass-input::placeholder {
+    color: var(--color-tobacco);
+    font-weight: 400;
+}
+
+.resetpass-input:focus {
+    border-color: var(--text-default);
+}
+
+/* Password Toggle Button */
+.password-toggle {
+    position: absolute;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.password-toggle img {
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.password-toggle:hover img {
+    opacity: 1;
+}
+
+/* Change Button */
+.resetpass-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    background: var(--text-default);
+    color: var(--color-vanilla);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.resetpass-btn:hover {
+    background: #3a2e26;
+    transform: translateY(-2px);
+}
+
+.resetpass-btn:active {
+    transform: translateY(0);
+}
+
+/* Reset My Password Link */
+.resetpass-link {
+    text-align: center;
+    color: var(--color-tobacco);
+    text-decoration: underline;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    display: block;
+}
+
+.resetpass-link:hover {
+    color: var(--text-default);
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+@media (max-width: 768px) {
+    .resetpass-header {
+        padding: 1.5rem;
+    }
+
+    .resetpass-header .logo span {
+        font-size: 1.2rem;
+    }
+
+    .resetpass-main {
+        padding: 1.5rem;
+        min-height: auto;
+    }
+
+    .resetpass-card {
+        padding: 2rem;
+    }
+
+    .resetpass-title {
+        font-size: 1.5rem;
+    }
+
+    .resetpass-description {
+        font-size: 0.9rem;
+    }
+}

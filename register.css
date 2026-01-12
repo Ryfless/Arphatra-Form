@@ -1,0 +1,22 @@
+/* Register Specific Styles */
+.form-wrapper {
+    flex-direction: row-reverse;
+}
+
+.form-section {
+    order: 2;
+    animation: slideInRight 0.6s ease-out;
+}
+
+.banner-section {
+    order: 1;
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.form-section.slide-out {
+    animation: slideOutRight 0.6s ease-out forwards;
+}
+
+.banner-section.slide-out {
+    animation: slideOutLeft 0.6s ease-out forwards;
+}

@@ -1,0 +1,231 @@
+/* ============================= */
+/* OTP VERIFICATION SPECIFIC STYLES */
+/* ============================= */
+
+body.otp {
+    background: url('../images/background-collected.png') no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Header */
+.otp-header {
+    background-color: transparent;
+    padding: 2rem 3rem 1rem 3rem;
+    display: flex;
+    align-items: center;
+    box-shadow: none;
+    border-bottom: none;
+}
+
+.otp-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.otp-header .logo svg {
+    width: 32px;
+    height: 32px;
+    color: var(--text-default);
+    stroke-width: 2;
+}
+
+.otp-header .logo span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-default);
+    letter-spacing: 0.3px;
+}
+
+/* Main Content */
+.otp-main {
+    padding: 2rem 3rem 3rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+}
+
+.otp-container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* OTP Card */
+.otp-card {
+    background: var(--color-vanilla);
+    padding: 3rem;
+    border-radius: 45px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+}
+
+.otp-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-default);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.otp-description {
+    font-size: 0.95rem;
+    color: var(--text-default);
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+/* Form */
+.otp-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+/* OTP Inputs */
+.otp-inputs {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+}
+
+/* OTP Input Boxes */
+.otp-input {
+    width: 70px;
+    height: 70px;
+    padding: 0;
+    border: 2px solid #D3D3D3;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    color: #704214;
+    background-color: #F1EADA !important;
+    outline: none;
+    transition: all 0.3s ease;
+    line-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.otp-input:focus {
+    border-color: #704214;
+    box-shadow: 0 0 0 3px rgba(112, 66, 20, 0.15);
+    background-color: #F1EADA !important;
+}
+
+.otp-input::-webkit-outer-spin-button,
+.otp-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.otp-input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.otp-input::placeholder {
+    color: #704214;
+    font-weight: 500;
+}
+
+/* Verify Button */
+.otp-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    background: var(--text-default);
+    color: var(--color-vanilla);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.otp-btn:hover {
+    background: #3a2e26;
+    transform: translateY(-2px);
+}
+
+.otp-btn:active {
+    transform: translateY(0);
+}
+
+/* OTP Footer */
+.otp-footer {
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.otp-text {
+    color: var(--color-tobacco);
+    font-weight: 400;
+}
+
+.otp-resend {
+    color: var(--text-default);
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    margin-left: 0.1rem;
+}
+
+.otp-resend:hover {
+    color: #3a2e26;
+}
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+@media (max-width: 768px) {
+    .otp-header {
+        padding: 1.5rem;
+    }
+
+    .otp-header .logo span {
+        font-size: 1.2rem;
+    }
+
+    .otp-main {
+        padding: 1.5rem;
+        min-height: auto;
+    }
+
+    .otp-card {
+        padding: 2rem;
+    }
+
+    .otp-title {
+        font-size: 1.5rem;
+    }
+
+    .otp-description {
+        font-size: 0.9rem;
+    }
+
+    .otp-inputs {
+        gap: 0.5rem;
+    }
+
+    .otp-input {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+}
