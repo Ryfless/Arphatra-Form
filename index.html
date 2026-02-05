@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arphatra Interface - Final Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded shadow">
+                <h2 class="font-bold mb-4">Register</h2>
+                <form id="registerForm" class="space-y-4">
+                    <input type="text" id="regName" placeholder="Name" class="w-full p-2 border rounded" required>
+                    <input type="email" id="regEmail" placeholder="Email" class="w-full p-2 border rounded" required>
+                    <input type="password" id="regPassword" placeholder="Password (min 8 karakter)" class="w-full p-2 border rounded" required>
+                    <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Register</button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded shadow">
+                <div id="loginSection">
+                    <h2 class="font-bold mb-4">Login</h2>
+                    <form id="loginForm" class="space-y-4">
+                        <input type="email" id="loginEmail" placeholder="Email" class="w-full p-2 border rounded" required>
+                        <input type="password" id="loginPassword" placeholder="Password" class="w-full p-2 border rounded" required>
+                        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Login</button>
+                    </form>
+                    
+                    <button onclick="loginWithGoogle()" class="w-full mt-2 bg-white border border-gray-300 text-gray-700 py-2 rounded flex items-center justify-center hover:bg-gray-50 transition">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 mr-2" alt="Google">
+                        Google Login
+                    </button>
+
+                    <button onclick="toggleForgot(true)" class="mt-4 text-blue-500 w-full text-sm">Lupa Password?</button>
+                </div>
+
+                <div id="forgotSection" class="hidden">
+                    <h2 class="font-bold mb-4">Reset Password</h2>
+                    <div id="otpStep" class="space-y-4">
+                        <input type="email" id="forgotEmail" placeholder="Masukkan Email Anda" class="w-full p-2 border rounded">
+                        <button onclick="sendOtp()" class="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600">Kirim OTP</button>
+                    </div>
+                    <div id="resetStep" class="hidden space-y-4 mt-4">
+                        <input type="text" id="otpCode" placeholder="Masukkan Kode OTP" class="w-full p-2 border rounded">
+                        <input type="password" id="newPass" placeholder="Password Baru" class="w-full p-2 border rounded">
+                        <button onclick="resetPass()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Update Password</button>
+                    </div>
+                    <button onclick="toggleForgot(false)" class="mt-4 text-gray-500 w-full text-sm">Kembali ke Login</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileSection" class="bg-white p-6 rounded shadow hidden">
+            <h2 class="font-bold mb-2">User Profile (From Cloud)</h2>
+            <div id="userData" class="bg-gray-50 p-4 mb-4 font-mono text-xs overflow-x-auto border rounded"></div>
+            <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
+        </div>
+
+        <div class="bg-black text-green-400 p-4 rounded h-40 overflow-y-auto font-mono text-xs">
+            <div id="consoleLog"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://expressapi-m6mrpekhiq-uc.a.run.app";
+
+        const log = (msg, err = false) => {
+            const div = document.getElementById('consoleLog');
+            const p = document.createElement('p');
+            p.className = err ? 'text-red-400' : 'text-green-400';
+            p.textContent = `> [${new Date().toLocaleTimeString()}] ${msg}`;
+            div.appendChild(p); 
+            div.scrollTop = div.scrollHeight;
+        };
+
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzzx9itbJRQl6Q1DVHnVZzt_aZntBF0i4",
+            authDomain: "pentataste-ff444.firebaseapp.com",
+            projectId: "pentataste-ff444",
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // --- UI HELPERS ---
+        function toggleForgot(show) {
+            document.getElementById('loginSection').classList.toggle('hidden', show);
+            document.getElementById('forgotSection').classList.toggle('hidden', !show);
+            // Reset steps when toggling
+            if(!show) {
+                document.getElementById('otpStep').classList.remove('hidden');
+                document.getElementById('resetStep').classList.add('hidden');
+            }
+        }
+
+        // --- AUTH LOGIC ---
+
+        // 1. Register
+        document.getElementById('registerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            try {
+                log("Mendaftarkan user ke cloud...");
+                const res = await fetch(`${API}/register`, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({
+                        fullName: regName.value, 
+                        email: regEmail.value, 
+                        password: regPassword.value
+                    }) 
+                });
+                const data = await res.json(); 
+                log(data.message, !data.success);
+            } catch (err) {
+                log("Error registrasi: " + err.message, true);
+            }
+        };
+
+        // 2. Login Biasa
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            try {
+                log("Verifikasi login via cloud...");
+                const res = await fetch(`${API}/login`, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({
+                        email: loginEmail.value, 
+                        password: loginPassword.value
+                    }) 
+                });
+                const data = await res.json();
+                log(data.message, !data.success);
+                
+                if(data.success) { 
+                    const token = data.data?.idToken || "manual-token";
+                    localStorage.setItem('token', token); 
+                    showLoggedInUI();
+                }
+            } catch (err) {
+                log("Gagal terhubung ke cloud", true);
+            }
+        };
+
+        // 3. Google Login
+        async function loginWithGoogle() {
+            try {
+                log("Membuka popup Google...");
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const idToken = await result.user.getIdToken();
+
+                const res = await fetch(`${API}/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken })
+                });
+
+                const data = await res.json();
+                log(data.message, !data.success);
+
+                if (data.success) {
+                    localStorage.setItem('token', idToken);
+                    showLoggedInUI();
+                }
+            } catch (err) {
+                log("Google Login error", true);
+            }
+        }
+
+        // 4. Forgot Password (OTP)
+        async function sendOtp() {
+            try {
+                log("Mengirim permintaan OTP...");
+                const res = await fetch(`${API}/forgot-password`, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({email: forgotEmail.value}) 
+                });
+                const data = await res.json(); 
+                log(data.message, !data.success);
+                if(data.success) { 
+                    document.getElementById('otpStep').classList.add('hidden'); 
+                    document.getElementById('resetStep').classList.remove('hidden'); 
+                }
+            } catch (err) {
+                log("Gagal kirim OTP", true);
+            }
+        }
+
+        // 5. Reset Password
+        async function resetPass() {
+            try {
+                log("Mengupdate password...");
+                const res = await fetch(`${API}/reset-password`, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({
+                        email: forgotEmail.value, 
+                        otp: otpCode.value, 
+                        newPassword: newPass.value
+                    }) 
+                });
+                const data = await res.json(); 
+                log(data.message, !data.success);
+                if(data.success) {
+                    setTimeout(() => location.reload(), 2000);
+                }
+            } catch (err) {
+                log("Gagal reset password", true);
+            }
+        }
+
+        // --- PROFILE & SESSION ---
+        async function fetchProfile() {
+            const token = localStorage.getItem('token');
+            if(!token) return;
+
+            try {
+                const res = await fetch(`${API}/profile`, { 
+                    headers: {'Authorization': `Bearer ${token}`} 
+                });
+                const data = await res.json();
+                if(data.success) {
+                    document.getElementById('userData').innerHTML = `<pre>${JSON.stringify(data.data, null, 2)}</pre>`;
+                } else {
+                    logout(); // Token tidak valid
+                }
+            } catch (err) {
+                log("Sesi berakhir atau server down", true);
+            }
+        }
+
+        function showLoggedInUI() {
+            document.getElementById('profileSection').classList.remove('hidden');
+            document.getElementById('loginSection').classList.add('hidden');
+            fetchProfile();
+        }
+
+        async function logout() { 
+            try {
+                await fetch(`${API}/logout`, { method: 'POST' });
+            } catch (e) {}
+            localStorage.removeItem('token'); 
+            document.getElementById('profileSection').classList.add('hidden'); 
+            document.getElementById('loginSection').classList.remove('hidden');
+            log("Logout berhasil"); 
+        }
+
+        // Check session on startup
+        if(localStorage.getItem('token')) {
+            showLoggedInUI();
+        }
+    </script>
+</body>
+</html>
