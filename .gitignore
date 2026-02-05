@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Environment files (Safety fallback)
+.env
+.env.local
+*.json.key
+serviceAccountKey.json
