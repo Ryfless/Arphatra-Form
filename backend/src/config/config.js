@@ -9,6 +9,7 @@ export const config = {
   firebaseApiKey: process.env.FIREBASE_API_KEY,
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
   firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET?.replace("gs://", ""), // Strip gs:// prefix
   firebaseSignUpUrl: `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${process.env.FIREBASE_API_KEY}`,
   firebaseSignInUrl: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FIREBASE_API_KEY}`,
   nodeEnv: process.env.NODE_ENV || "development",

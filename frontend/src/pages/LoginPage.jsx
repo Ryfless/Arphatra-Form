@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "@/lib/firebase.js";
 import Popup from "@/components/Popup.jsx";
 import Toast from "@/components/Toast.jsx";
 import { API_BASE_URL } from "@/lib/config.js";
@@ -23,6 +25,43 @@ export default function LoginPage() {
   const showToast = (message, type = "success") => {
     setToast({ open: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, open: false })), 4000);
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const idToken = await user.getIdToken();
+
+        // Kirim ke backend untuk verifikasi & sinkronisasi data user
+        const res = await fetch(`${API_BASE_URL}/google-login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            saveToken(idToken);
+            saveUser({
+                fullName: user.displayName || "Google User",
+                email: user.email,
+                id: user.uid,
+            });
+            setIsNewUser(data.isNewUser || false);
+            showToast("Login successful", "success");
+            setTimeout(() => navigate("/homepage"), 1200);
+        } else {
+            throw new Error(data.message || "Backend sync failed");
+        }
+    } catch (error) {
+        console.error("Google Login Error:", error);
+        showToast("Google login failed", "error");
+    } finally {
+        setLoading(false);
+    }
   };
 
   const showPopup = (message, type = "info") => {
@@ -158,6 +197,22 @@ export default function LoginPage() {
               disabled={loading}
             >
               {loading ? "Signing In..." : "Sign In"}
+            </button>
+
+            <div className="flex items-center gap-4 my-2">
+                <div className="flex-1 h-px bg-mahogany/20"></div>
+                <span className="text-mahogany/40 text-sm font-bold">OR</span>
+                <div className="flex-1 h-px bg-mahogany/20"></div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="rounded-full text-lg font-semibold py-3 transition-all bg-white border-2 border-mahogany/10 text-mahogany hover:bg-mahogany/5 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+              disabled={loading}
+            >
+              <img src="/assets/icons/login/uim_google.svg" alt="" className="w-6 h-6" />
+              <span>Sign in with Google</span>
             </button>
           </form>
 

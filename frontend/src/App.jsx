@@ -5,6 +5,8 @@ import OtpPage from "@/pages/OtpPage.jsx";
 import RegisterPage from "@/pages/RegisterPage.jsx";
 import ResetPassPage from "@/pages/ResetPassPage.jsx";
 import AuthLayout from "@/layouts/AuthLayout.jsx";
+import CreateFormPage from "@/pages/CreateFormPage.jsx";
+import ViewFormPage from "@/pages/ViewFormPage.jsx";
 import { getToken, getUser } from "@/lib/storage.js";
 
 function RootRedirect() {
@@ -30,6 +32,9 @@ export default function App() {
       </Route>
 
       <Route path="/homepage" element={<HomePage />} />
+      <Route path="/form/create" element={<CreateFormPage />} />
+      <Route path="/form/edit/:formId" element={<CreateFormPage />} />
+      <Route path="/form/view/:formId" element={<ViewFormPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

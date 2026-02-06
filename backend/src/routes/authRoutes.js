@@ -20,7 +20,7 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/refresh-token", refreshToken);
-router.post("/google", googleAuth);
+router.post("/google-login", googleAuth);
 
 // Protected Routes (memerlukan token)
 router.post("/logout", verifyToken, logout);

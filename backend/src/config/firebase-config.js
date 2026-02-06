@@ -5,6 +5,7 @@ import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { config } from "./config.js"; // Import config yang sudah kita bersihkan
 
 dotenv.config();
 
@@ -24,13 +25,17 @@ if (admin.apps.length === 0) {
 
       adminApp = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.FIREBASE_PROJECT_ID,
+        projectId: config.firebaseProjectId,
+        storageBucket: config.storageBucket // Menggunakan bucket yang sudah di-strip gs://
       });
       console.log("🔥 Firebase Admin Initialized (Local)");
     } catch (error) {
-      console.error("❌ Failed to load serviceAccountKey.json. Make sure it exists in the backend root for local testing.");
-      // Fallback ke default, mungkin pakai GOOGLE_APPLICATION_CREDENTIALS env var
-      adminApp = admin.initializeApp();
+      console.error("❌ Failed to load serviceAccountKey.json or Init Failed:", error.message);
+      // Fallback
+      adminApp = admin.initializeApp({
+          projectId: config.firebaseProjectId,
+          storageBucket: config.storageBucket
+      });
     }
   }
 } else {
@@ -40,6 +45,20 @@ if (admin.apps.length === 0) {
 const db = admin.firestore();
 const auth = admin.auth();
 
-export { admin, auth, db };
+// Safe Bucket Initialization
+let bucket;
+try {
+    // Jika config.storageBucket kosong, ini akan melempar error yang kita tangkap
+    bucket = admin.storage().bucket(config.storageBucket);
+    console.log(`✅ Storage Bucket Initialized: ${config.storageBucket || 'Default'}`);
+} catch (e) {
+    console.warn("⚠️ Storage Bucket Failed to Initialize:", e.message);
+    bucket = { 
+        file: () => ({ 
+            createWriteStream: () => { throw new Error("Storage not configured or invalid bucket name"); },
+            makePublic: async () => {}
+        }) 
+    };
+}
 
-
+export { admin, auth, db, bucket };
