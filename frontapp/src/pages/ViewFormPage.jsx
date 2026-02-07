@@ -119,7 +119,7 @@ export default function ViewFormPage() {
     try {
         await apiRequest(`/api/forms/${formId}/submit`, { method: "POST", body: JSON.stringify({ answers }) });
         setToast({ show: true, message: "Response submitted successfully!", type: "success" });
-        setTimeout(() => navigate("/homepage"), 2000);
+        setTimeout(() => navigate("/"), 2000);
     } catch (error) {
         setToast({ show: true, message: "Failed to submit", type: "error" });
     }

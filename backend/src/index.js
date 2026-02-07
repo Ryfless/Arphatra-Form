@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import formRoutes from "./routes/formRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use("/", authRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Root Endpoint (Health Check)
 app.get("/", (req, res) => {

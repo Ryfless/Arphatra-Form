@@ -117,7 +117,7 @@ export default function CreateFormPage() {
                 setFormData({ name: data.name || "Form 1", title: data.title, description: data.description, bannerImage: data.bannerImage });
                 setTheme(data.theme);
                 setQuestions(data.questions);
-                setGeneratedLink(`${window.location.origin}/form/view/${formId}`);
+                setGeneratedLink(`http://localhost:5174/form/view/${formId}`);
             } catch (error) { setToast({ show: true, message: "Failed to load", type: "error" }); }
         };
         fetchForm();
@@ -136,7 +136,7 @@ export default function CreateFormPage() {
             const newId = res.data.id;
             setCurrentId(newId);
             window.history.replaceState(null, "", `/form/edit/${newId}`);
-            setGeneratedLink(`${window.location.origin}/form/view/${newId}`);
+            setGeneratedLink(`http://localhost:5174/form/view/${newId}`);
             setToast({ show: true, message: "Created!", type: "success" });
         }
     } catch (error) { setToast({ show: true, message: "Error", type: "error" }); } finally { setTimeout(() => { setIsSaving(false); isCurrentlySaving.current = false; }, 500); }
@@ -233,6 +233,46 @@ export default function CreateFormPage() {
     setPreviewAnswers({}); 
     setPreviewErrors([]);
     setActiveQuestionId(null); 
+  };
+
+  const handleExportCSV = () => {
+    if (respondents.length === 0) {
+        setToast({ show: true, message: "No responses to export", type: "info" });
+        return;
+    }
+
+    // 1. Prepare Headers (Timestamp + Question Titles)
+    const activeQuestions = questions.filter(q => !['section', 'text', 'image', 'video'].includes(q.type));
+    const headers = ["Submitted At", ...activeQuestions.map(q => q.title || "Untitled Question")];
+
+    // 2. Prepare Rows
+    const rows = respondents.map(res => {
+        const rowData = [res.timestamp];
+        activeQuestions.forEach(q => {
+            let answer = res.answers[q.id];
+            
+            // Format complex answers (array, object, etc)
+            if (Array.isArray(answer)) answer = answer.join("; ");
+            if (answer === undefined || answer === null) answer = "";
+            
+            // Escape commas and quotes for CSV
+            answer = `"${(answer.toString()).replace(/"/g, '""')}"`;
+            rowData.push(answer);
+        });
+        return rowData.join(",");
+    });
+
+    // 3. Combine and Trigger Download
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${formData.name || 'form'}_responses.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setToast({ show: true, message: "CSV Exported successfully!", type: "success" });
   };
 
   // --- FETCH RESPONSES ---
@@ -512,7 +552,7 @@ export default function CreateFormPage() {
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center py-12 gap-8 bg-vanilla animate-fade-in">
                 <div className="w-full max-w-[1000px] flex flex-col gap-8 pb-40">
                     <div className="flex flex-col gap-6">
-                        <div className="flex justify-between items-end"><div className="flex flex-col gap-1"><h1 className="text-[44px] font-bold text-mahogany">{realResponses.total} Responses</h1><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div><p className="text-tobacco text-[18px]">Accepting responses</p></div></div><div className="flex gap-4"><button className="bg-white border border-mahogany/20 px-6 py-2.5 rounded-xl font-bold text-mahogany hover:bg-mahogany/5 transition-all flex items-center gap-2 shadow-sm"><img src="/assets/icons/front-apps/spreadsheet.svg" alt="" className="w-5 h-5" /><span>Export</span></button></div></div>
+                        <div className="flex justify-between items-end"><div className="flex flex-col gap-1"><h1 className="text-[44px] font-bold text-mahogany">{realResponses.total} Responses</h1><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div><p className="text-tobacco text-[18px]">Accepting responses</p></div></div><div className="flex gap-4"><button onClick={handleExportCSV} className="bg-white border border-mahogany/20 px-6 py-2.5 rounded-xl font-bold text-mahogany hover:bg-mahogany/5 transition-all flex items-center gap-2 shadow-sm cursor-pointer"><img src="/assets/icons/front-apps/spreadsheet.svg" alt="" className="w-5 h-5" /><span>Export</span></button></div></div>
                         <div className="flex gap-8 border-b border-mahogany/10 pb-1">{['summary', 'question', 'individual'].map((tab) => (<button key={tab} onClick={() => setAnswerView(tab)} className={`text-[18px] font-bold pb-2 transition-all capitalize ${answerView === tab ? 'text-mahogany border-b-4 border-mahogany' : 'text-tobacco hover:text-mahogany'}`}>{tab}</button>))}</div>
                     </div>
                     {answerView === 'summary' && realResponses.questions.map((res, idx) => (

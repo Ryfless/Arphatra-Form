@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@theme {
+  --font-poppins: "Poppins", sans-serif;
+
+  /* Main Colors */
+  --color-vanilla: #F1EADA;
+  --color-rice: #F6F8ED;
+
+  /* Primary */
+  --color-mahogany: #584738;
+
+  /* Secondary */
+  --color-mountain: #AAA396;
+  --color-sand: #CEC1A8;
+  --color-tobacco: #B59E7D;
+
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-weak: #b45309;
+  --color-medium: #92400e;
+  --color-strong: #15803d;
+
+  /* Shadows */
+  --shadow-default: 0 4px 4px rgba(0,0,0,0.25);
+  --shadow-btn-hover: 0 8px 20px rgba(88,71,56,0.35);
+  --shadow-google-btn-hover: 0 4px 12px rgba(0,0,0,0.08);
+
+  /* Animations */
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-fade-out: fadeOut 0.3s ease-out;
+  --animate-slide-in-left: slideInLeft 0.6s ease-out forwards;
+  --animate-slide-in-right: slideInRight 0.6s ease-out forwards;
+  --animate-switch-left: switchLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-switch-right: switchRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-cover-slide-right: coverSlideRight 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  --animate-cover-slide-left: coverSlideLeft 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  --animate-reveal-form: revealForm 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  --animate-slide-down: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
+  }
+  @keyframes slideInLeft {
+    from { transform: translateX(-30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes switchLeft {
+    0% { transform: translateX(-80px) scale(0.98); opacity: 0; }
+    100% { transform: translateX(0) scale(1); opacity: 1; }
+  }
+  @keyframes switchRight {
+    0% { transform: translateX(80px) scale(0.98); opacity: 0; }
+    100% { transform: translateX(0) scale(1); opacity: 1; }
+  }
+  @keyframes coverSlideRight {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes coverSlideLeft {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes revealForm {
+    0% { opacity: 0; transform: scale(0.98); filter: blur(4px); }
+    30% { opacity: 0; transform: scale(0.98); filter: blur(4px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(88, 71, 56, 0.1), 0 0 0px rgba(88, 71, 56, 0); }
+    50% { box-shadow: 0 0 30px rgba(88, 71, 56, 0.3), 0 0 15px rgba(88, 71, 56, 0.2); }
+  }
+}
+
+/* ============================= */
+/* PERFORMANCE OPTIMIZATION      */
+/* ============================= */
+.animate-cover-slide-right,
+.animate-cover-slide-left,
+.animate-reveal-form {
+  will-change: transform, opacity, filter;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 3s infinite ease-in-out;
+}
+
+/* ============================= */
+/* GLOBAL RESETS                 */
+/* ============================= */
+@layer base {
+  body {
+    @apply font-poppins bg-rice text-mahogany;
+  }
+
+  input,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    @apply text-mahogany border-mahogany bg-rice;
+    caret-color: var(--color-mahogany);
+  }
+
+  input::placeholder {
+    @apply text-tobacco opacity-100;
+  }
+
+  input:focus {
+    @apply outline-none ring-0 border-mahogany;
+  }
+
+  /* Hide native calendar icon in date inputs */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+  }
+}
+
+/* Custom Text Selection Color */
+::selection {
+  background-color: rgba(88, 71, 56, 0.2);
+  color: #584738;
+}
+
+/* Specific fix for date inputs to avoid selecting dd/mm/yyyy segments */
+input[type="date"]::selection {
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  background: transparent;
+}
+
+input[type="date"]:focus {
+  outline: none;
+}
+
+/* ============================= */
+/* UTILITIES / FIXES             */
+/* ============================= */
+
+/* FIX TAILWIND HIDDEN CONFLICT */
+#logoutModal {
+  display: flex !important;
+}
+#logoutModal.hidden {
+  display: none !important;
+}
+
+/* CUSTOM SCROLLBAR */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-vanilla;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-mahogany rounded-full;
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-color: var(--color-mahogany) var(--color-vanilla);
+  scrollbar-width: thin;
+}

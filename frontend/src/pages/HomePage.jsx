@@ -380,7 +380,7 @@ export default function HomePage() {
                                             {activeFormMenu === form.id && (
                                                 <div className="absolute right-0 top-full mt-2 w-40 md:w-48 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-mahogany/5 py-1 md:py-2 z-[150] text-mahogany" onClick={(e) => e.stopPropagation()}>
                                                     <button onClick={() => navigate(`/form/edit/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("edit")}</button>
-                                                    <button onClick={() => navigate(`/form/view/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
+                                                    <button onClick={() => window.open(`http://localhost:5174/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
                                                     <button onClick={() => setFormToDelete(form.id)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors text-sm md:text-base font-bold mt-1 border-t border-mahogany/5 border-none bg-transparent cursor-pointer">{t("delete")}</button>
                                                 </div>
                                             )}
@@ -419,7 +419,7 @@ export default function HomePage() {
                                         {activeFormMenu === form.id && (
                                             <div className="absolute right-0 top-full mt-2 w-40 md:w-48 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-mahogany/5 py-1 md:py-2 z-[150] text-mahogany" onClick={(e) => e.stopPropagation()}>
                                                 <button onClick={() => navigate(`/form/edit/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("edit")}</button>
-                                                <button onClick={() => navigate(`/form/view/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
+                                                <button onClick={() => window.open(`http://localhost:5174/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
                                                 <button onClick={() => setFormToDelete(form.id)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors text-sm md:text-base font-bold mt-1 border-t border-mahogany/5 border-none bg-transparent cursor-pointer">{t("delete")}</button>
                                             </div>
                                         )}

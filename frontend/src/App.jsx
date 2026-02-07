@@ -7,7 +7,6 @@ import RegisterPage from "@/pages/RegisterPage.jsx";
 import ResetPassPage from "@/pages/ResetPassPage.jsx";
 import AuthLayout from "@/layouts/AuthLayout.jsx";
 import CreateFormPage from "@/pages/CreateFormPage.jsx";
-import ViewFormPage from "@/pages/ViewFormPage.jsx";
 import ProfilePage from "@/pages/ProfilePage.jsx";
 import SettingsPage from "@/pages/SettingsPage.jsx";
 import SessionExpiredModal from "@/components/SessionExpiredModal.jsx";
@@ -50,7 +49,6 @@ export default function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/form/create" element={<CreateFormPage />} />
         <Route path="/form/edit/:formId" element={<CreateFormPage />} />
-        <Route path="/form/view/:formId" element={<ViewFormPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
