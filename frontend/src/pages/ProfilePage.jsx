@@ -30,7 +30,7 @@ export default function ProfilePage() {
     document.title = "My Profile - Arphatra";
     const fetchProfile = async () => {
       try {
-        const response = await apiRequest("/api/users/profile");
+        const response = await apiRequest("/users/profile");
         setUser(response.data);
         setFullName(response.data.fullName || "");
         // Sync storage if needed
@@ -62,7 +62,7 @@ export default function ProfilePage() {
 
     try {
       setIsUpdating(true);
-      const response = await apiRequest("/api/users/profile", {
+      const response = await apiRequest("/users/profile", {
         method: "PUT",
         body: JSON.stringify({ fullName }),
       });
@@ -111,7 +111,7 @@ export default function ProfilePage() {
     try {
       setIsUploading(true);
       
-      const uploadResponse = await fetch("http://localhost:5000/api/upload", {
+      const uploadResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("token")}`,
@@ -124,7 +124,7 @@ export default function ProfilePage() {
 
       const imageUrl = uploadData.data.url;
 
-      const updateResponse = await apiRequest("/api/users/profile", {
+      const updateResponse = await apiRequest("/users/profile", {
         method: "PUT",
         body: JSON.stringify({ avatarUrl: imageUrl }),
       });
@@ -145,7 +145,7 @@ export default function ProfilePage() {
     
     try {
       setIsSendingOtp(true);
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/forgot-password`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email }),

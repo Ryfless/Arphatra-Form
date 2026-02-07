@@ -18,7 +18,7 @@ export default function Sidebar({ onClose, theme, onUpdateTheme }) {
     const token = getToken();
 
     try {
-        const response = await fetch("http://localhost:5000/api/upload", {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` },
             body: formData
@@ -53,7 +53,7 @@ export default function Sidebar({ onClose, theme, onUpdateTheme }) {
     if (activeTab === "forms") {
         const fetchForms = async () => {
             try {
-                const res = await apiRequest("/api/forms");
+                const res = await apiRequest("/forms");
                 setMyForms(res.data);
             } catch (err) {
                 console.error("Failed sidebar forms", err);

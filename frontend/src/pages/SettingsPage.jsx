@@ -35,7 +35,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const res = await apiRequest("/api/users/settings");
+      const res = await apiRequest("/users/settings");
       setSettings(res.data);
     } catch (error) {
       console.error("Failed to load settings", error);
@@ -58,7 +58,7 @@ export default function SettingsPage() {
     }
 
     try {
-        await apiRequest("/api/users/settings", {
+        await apiRequest("/users/settings", {
             method: "PUT",
             body: JSON.stringify({ category, key, value })
         });
@@ -73,7 +73,7 @@ export default function SettingsPage() {
     if (!confirmAction.type) return;
     
     try {
-        const endpoint = confirmAction.type === 'deactivate' ? '/api/users/deactivate' : '/api/users/delete';
+        const endpoint = confirmAction.type === 'deactivate' ? '/users/deactivate' : '/users/delete';
         const method = confirmAction.type === 'deactivate' ? 'POST' : 'DELETE';
         
         const response = await apiRequest(endpoint, { method });

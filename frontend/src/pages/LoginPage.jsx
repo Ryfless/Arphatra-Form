@@ -38,7 +38,7 @@ export default function LoginPage() {
         const idToken = await user.getIdToken();
 
         // Kirim ke backend untuk verifikasi & sinkronisasi data user
-        const res = await fetch(`${API_BASE_URL}/google-login`, {
+        const res = await fetch(`${API_BASE_URL}/auth/google-login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ idToken }),
@@ -77,7 +77,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),

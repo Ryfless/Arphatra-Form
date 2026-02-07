@@ -5,10 +5,12 @@ import { apiRequest } from "@/lib/api.js";
 import Toast from "@/components/Toast.jsx";
 import ImagePreviewModal from "@/components/ImagePreviewModal.jsx";
 import DatePickerModal from "@/components/DatePickerModal.jsx";
+import { useLanguage } from "@/lib/i18n.jsx";
 
 export default function ViewFormPage() {
   const { formId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [formResetKey, setFormResetKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
@@ -50,19 +52,19 @@ export default function ViewFormPage() {
     const fetchForm = async () => {
         try {
             setIsLoading(true);
-            const response = await apiRequest(`/api/forms/${formId}`);
+            const response = await apiRequest(`/forms/${formId}`);
             const data = response.data;
             setFormData({ title: data.title, description: data.description, bannerImage: data.bannerImage || "/assets/images/default-banner.png" });
             setTheme(data.theme);
             setQuestions(data.questions);
         } catch (error) {
-            setToast({ show: true, message: "Form not found", type: "error" });
+            setToast({ show: true, message: t("form_not_found"), type: "error" });
         } finally {
             setIsLoading(false);
         }
     };
     fetchForm();
-  }, [formId]);
+  }, [formId, t]);
 
   const handleChangeResponse = (questionId, value) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -84,7 +86,7 @@ export default function ViewFormPage() {
     const missing = validatePage(currentPage);
     if (missing.length > 0) {
         setErrors(missing.map(q => q.id));
-        setToast({ show: true, message: "Please answer all required questions.", type: "error" });
+        setToast({ show: true, message: t("submit_required_alert"), type: "error" });
         return;
     }
     setErrors([]);
@@ -103,7 +105,7 @@ export default function ViewFormPage() {
     setAnswers({}); 
     setErrors([]);
     setCurrentPage(0);
-    setToast({ show: true, message: "Form cleared", type: "info" });
+    setToast({ show: true, message: t("form_cleared_msg"), type: "info" });
   };
 
   const handleSubmit = async (e) => {
@@ -112,20 +114,20 @@ export default function ViewFormPage() {
     const missing = validatePage(currentPage);
     if (missing.length > 0) {
         setErrors(missing.map(q => q.id));
-        setToast({ show: true, message: "Please answer all required questions.", type: "error" });
+        setToast({ show: true, message: t("submit_required_alert"), type: "error" });
         return;
     }
 
     try {
-        await apiRequest(`/api/forms/${formId}/submit`, { method: "POST", body: JSON.stringify({ answers }) });
-        setToast({ show: true, message: "Response submitted successfully!", type: "success" });
+        await apiRequest(`/forms/${formId}/submit`, { method: "POST", body: JSON.stringify({ answers }) });
+        setToast({ show: true, message: t("submit_success"), type: "success" });
         setTimeout(() => navigate("/"), 2000);
     } catch (error) {
-        setToast({ show: true, message: "Failed to submit", type: "error" });
+        setToast({ show: true, message: t("submit_failed"), type: "error" });
     }
   };
 
-  if (isLoading) return <div className="h-screen w-screen flex items-center justify-center bg-mountain font-bold text-mahogany animate-pulse">Loading Form...</div>;
+  if (isLoading) return <div className="h-screen w-screen flex items-center justify-center bg-mountain font-bold text-mahogany animate-pulse">{t("loading_form")}</div>;
 
   const currentQuestions = pages[currentPage] || [];
   const isLastPage = currentPage === pages.length - 1;
@@ -205,19 +207,19 @@ export default function ViewFormPage() {
           <div className="w-full max-w-[1000px] flex justify-between items-center mt-8 md:mt-12 mb-20 px-4 md:px-0">
               <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-start md:items-center">
                 {currentPage > 0 && (
-                    <button onClick={handleBack} className="border-2 border-mahogany/20 text-mahogany px-4 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl font-bold hover:bg-mahogany/5 transition-all text-sm md:text-base w-full md:w-auto">Back</button>
+                    <button onClick={handleBack} className="border-2 border-mahogany/20 text-mahogany px-4 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl font-bold hover:bg-mahogany/5 transition-all text-sm md:text-base w-full md:w-auto">{t("back")}</button>
                 )}
-                <button onClick={handleClear} className="text-mahogany/40 font-bold hover:text-mahogany px-2 md:px-4 py-2 text-sm md:text-base">Clear Form</button>
+                <button onClick={handleClear} className="text-mahogany/40 font-bold hover:text-mahogany px-2 md:px-4 py-2 text-sm md:text-base">{t("clear_form")}</button>
               </div>
 
               {isLastPage ? (
                 <button onClick={handleSubmit} className="bg-mahogany text-rice px-6 md:px-12 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-base md:text-[20px] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 md:gap-3">
-                    <span>Submit</span>
+                    <span>{t("submit")}</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="md:w-6 md:h-6"><path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
               ) : (
                 <button onClick={handleNext} className="bg-mahogany text-rice px-6 md:px-12 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-base md:text-[20px] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 md:gap-3">
-                    <span>Next</span>
+                    <span>{t("next")}</span>
                     <img src="/assets/icons/cms-form/thick-next-arrow.svg" alt="" className="w-4 h-4 md:w-5 md:h-5 invert" />
                 </button>
               )}
@@ -225,7 +227,7 @@ export default function ViewFormPage() {
 
           {/* Progress Indicator */}
           <div className="flex flex-col items-center gap-2 mb-10 opacity-40">
-              <span className="text-[10px] md:text-[12px] font-bold text-mahogany uppercase tracking-widest">Page {currentPage + 1} of {pages.length}</span>
+              <span className="text-[10px] md:text-[12px] font-bold text-mahogany uppercase tracking-widest">{t("page_of").replace("{current}", currentPage + 1).replace("{total}", pages.length)}</span>
               <div className="flex gap-1.5 md:gap-2">
                   {pages.map((_, i) => (
                       <div key={i} className={`h-1 md:h-1.5 rounded-full transition-all ${i === currentPage ? 'w-6 md:w-8 bg-mahogany' : 'w-1.5 md:w-2 bg-mahogany/20'}`}></div>

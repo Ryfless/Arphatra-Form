@@ -84,7 +84,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       // Panggil Backend API alih-alih Firebase langsung agar data tersimpan di Firestore
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || API_BASE_URL}/register`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

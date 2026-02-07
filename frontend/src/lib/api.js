@@ -1,6 +1,6 @@
 import { getToken, clearAuthStorage } from "./storage";
 
-const BASE_URL = "http://localhost:5000"; // Kembali menggunakan localhost
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();

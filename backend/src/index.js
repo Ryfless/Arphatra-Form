@@ -29,11 +29,11 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use("/", authRoutes);
-app.use("/api/forms", formRoutes);
-app.use("/api/upload", uploadRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/contact", contactRoutes);
+app.use("/auth", authRoutes);
+app.use("/forms", formRoutes);
+app.use("/upload", uploadRoutes);
+app.use("/users", userRoutes);
+app.use("/contact", contactRoutes);
 
 // Root Endpoint (Health Check)
 app.get("/", (req, res) => {
@@ -55,8 +55,7 @@ app.use((err, req, res, next) => {
 });
 
 // Export Cloud Function
-
-export const api = onRequest(app);
+export const api = onRequest({ region: "asia-southeast1" }, app);
 
 
 

@@ -73,7 +73,7 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
     formData.append("file", file);
     const token = getToken();
     try {
-        const response = await fetch("http://localhost:5000/api/upload", {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` },
             body: formData

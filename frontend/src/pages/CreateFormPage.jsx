@@ -58,6 +58,30 @@ export default function CreateFormPage() {
   const [currentRespondentIndex, setCurrentRespondentIndex] = useState(0);
   const [selectedQuestionIdForView, setSelectedQuestionIdForView] = useState(null);
 
+  const [slug, setSlug] = useState("");
+  const [isSlugAvailable, setIsSlugAvailable] = useState(true);
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+
+  const handleSlugChange = async (val) => {
+    const cleanSlug = val.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+    setSlug(cleanSlug);
+    
+    if (cleanSlug.length < 3) {
+        setIsSlugAvailable(true);
+        return;
+    }
+
+    setIsCheckingSlug(true);
+    try {
+        const res = await apiRequest(`/forms/check-slug?slug=${cleanSlug}`);
+        setIsSlugAvailable(res.available);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setIsCheckingSlug(false);
+    }
+  };
+
   const pages = useMemo(() => {
     const p = [];
     let currentPageItems = [];
@@ -74,7 +98,7 @@ export default function CreateFormPage() {
     formDataObj.append("file", file);
     const token = getToken();
     try {
-        const response = await fetch("http://localhost:5000/api/upload", { method: "POST", headers: { "Authorization": `Bearer ${token}` }, body: formDataObj });
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload`, { method: "POST", headers: { "Authorization": `Bearer ${token}` }, body: formDataObj });
         const data = await response.json();
         return data.status === 'success' ? data.data.url : null;
     } catch (error) { setToast({ show: true, message: "Upload failed", type: "error" }); return null; }
@@ -112,12 +136,13 @@ export default function CreateFormPage() {
         setCurrentId(formId);
         const fetchForm = async () => {
             try {
-                const response = await apiRequest(`/api/forms/${formId}`);
+                const response = await apiRequest(`/forms/${formId}`);
                 const data = response.data;
                 setFormData({ name: data.name || "Form 1", title: data.title, description: data.description, bannerImage: data.bannerImage });
                 setTheme(data.theme);
                 setQuestions(data.questions);
-                setGeneratedLink(`http://localhost:5174/form/view/${formId}`);
+                setSlug(data.slug || "");
+                setGeneratedLink(data.slug ? `https://arphatra.web.app/f/${data.slug}` : `https://arphatra.web.app/form/view/${formId}`);
             } catch (error) { setToast({ show: true, message: "Failed to load", type: "error" }); }
         };
         fetchForm();
@@ -129,14 +154,26 @@ export default function CreateFormPage() {
     isCurrentlySaving.current = true;
     setIsSaving(true);
     try {
-        const body = { name: formData.name, title: formData.title, description: formData.description, theme, questions, bannerImage: theme.bannerImage };
-        if (currentId) { await apiRequest(`/api/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); setToast({ show: true, message: "Saved!", type: "success" }); } 
+        const body = { 
+            name: formData.name, 
+            title: formData.title, 
+            description: formData.description, 
+            theme, 
+            questions, 
+            bannerImage: theme.bannerImage,
+            slug: slug || null 
+        };
+        if (currentId) { 
+            await apiRequest(`/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); 
+            setGeneratedLink(slug ? `${window.location.origin.replace('/cms', '')}/f/${slug}` : `${window.location.origin.replace('/cms', '')}/form/view/${currentId}`);
+            setToast({ show: true, message: "Saved!", type: "success" }); 
+        } 
         else {
-            const res = await apiRequest("/api/forms", { method: "POST", body: JSON.stringify(body) });
+            const res = await apiRequest("/forms", { method: "POST", body: JSON.stringify(body) });
             const newId = res.data.id;
             setCurrentId(newId);
             window.history.replaceState(null, "", `/form/edit/${newId}`);
-            setGeneratedLink(`http://localhost:5174/form/view/${newId}`);
+            setGeneratedLink(slug ? `${window.location.origin.replace('/cms', '')}/f/${slug}` : `${window.location.origin.replace('/cms', '')}/form/view/${newId}`);
             setToast({ show: true, message: "Created!", type: "success" });
         }
     } catch (error) { setToast({ show: true, message: "Error", type: "error" }); } finally { setTimeout(() => { setIsSaving(false); isCurrentlySaving.current = false; }, 500); }
@@ -280,7 +317,7 @@ export default function CreateFormPage() {
     if (activeTab === 'answer' && currentId) {
         const fetchResponses = async () => {
             try {
-                const response = await apiRequest(`/api/forms/${currentId}/responses`);
+                const response = await apiRequest(`/forms/${currentId}/responses`);
                 const rawData = response.data;
                 
                 const summaryQuestions = questions.map(q => {
@@ -384,8 +421,8 @@ export default function CreateFormPage() {
         if (!hasData) { setIsSaving(false); return; }
         try {
             const body = { name: formData.name, title: formData.title, description: formData.description, theme, questions, bannerImage: theme.bannerImage };
-            if (currentId) { await apiRequest(`/api/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); } 
-            else if (isCurrentlySaving.current === false) { isCurrentlySaving.current = true; const res = await apiRequest("/api/forms", { method: "POST", body: JSON.stringify(body) }); const newId = res.data.id; setCurrentId(newId); window.history.replaceState(null, "", `/form/edit/${newId}`); setGeneratedLink(`${window.location.origin}/form/view/${newId}`); isCurrentlySaving.current = false; }
+            if (currentId) { await apiRequest(`/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); } 
+            else if (isCurrentlySaving.current === false) { isCurrentlySaving.current = true; const res = await apiRequest("/forms", { method: "POST", body: JSON.stringify(body) }); const newId = res.data.id; setCurrentId(newId); window.history.replaceState(null, "", `/form/edit/${newId}`); setGeneratedLink(`${window.location.origin.replace('/cms', '')}/form/view/${newId}`); isCurrentlySaving.current = false; }
         } catch (err) { console.error(err); } finally { setTimeout(() => setIsSaving(false), 800); }
     }, 2500);
     return () => clearTimeout(timer);
@@ -413,7 +450,49 @@ export default function CreateFormPage() {
 
       {showPublishPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-rice rounded-[40px] p-12 w-[600px] shadow-2xl flex flex-col items-center gap-8 animate-reveal-form relative overflow-hidden"><div className="absolute top-0 left-0 w-full h-2 bg-mahogany"></div><div className="w-32 h-32 bg-vanilla rounded-full flex items-center justify-center shadow-inner border-4 border-mahogany/5"><img src="/assets/icons/arphatra-form-1.svg" alt="Logo" className="w-20 h-auto" /></div><div className="flex flex-col items-center gap-2 text-center"><h2 className="text-[32px] font-bold text-mahogany leading-tight">Form Published!</h2><p className="text-tobacco text-[18px] max-w-[350px]">Your professional form is live and ready.</p></div><div className="w-full flex flex-col gap-2"><span className="text-mahogany font-bold text-[14px] uppercase ml-2">Share link</span><div className="flex items-center gap-3 bg-vanilla/50 p-4 rounded-2xl border-2 border-mahogany/10 group"><input type="text" readOnly value={generatedLink} className="bg-transparent border-none outline-none flex-1 text-mahogany font-medium" /><button onClick={() => { navigator.clipboard.writeText(generatedLink); setToast({ show: true, message: "Copied!", type: "success" }); }} className="bg-mahogany text-rice px-6 py-2 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-md">Copy</button></div></div><button onClick={() => setShowPublishPopup(false)} className="text-tobacco font-bold hover:text-mahogany">Close</button></div>
+            <div className="bg-rice rounded-[40px] p-12 w-[600px] shadow-2xl flex flex-col items-center gap-8 animate-reveal-form relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-mahogany"></div>
+                <div className="w-32 h-32 bg-vanilla rounded-full flex items-center justify-center shadow-inner border-4 border-mahogany/5">
+                    <img src="/assets/icons/arphatra-form-1.svg" alt="Logo" className="w-20 h-auto" />
+                </div>
+                <div className="flex flex-col items-center gap-2 text-center">
+                    <h2 className="text-[32px] font-bold text-mahogany leading-tight">Form Published!</h2>
+                    <p className="text-tobacco text-[18px] max-w-[350px]">Your professional form is live and ready.</p>
+                </div>
+
+                {/* Custom Slug Section */}
+                <div className="w-full flex flex-col gap-3">
+                    <span className="text-mahogany font-bold text-[14px] uppercase ml-2">Customize URL</span>
+                    <div className="flex items-center gap-2 bg-vanilla/50 p-4 rounded-2xl border-2 border-mahogany/10 group focus-within:border-mahogany/30 transition-all flex-nowrap overflow-hidden">
+                        <span className="text-mahogany/40 font-bold select-none whitespace-nowrap shrink-0">arphatra.web.app/f/</span>
+                        <input 
+                            type="text" 
+                            placeholder="my-form-name"
+                            value={slug}
+                            onChange={(e) => handleSlugChange(e.target.value)}
+                            className="bg-transparent border-none outline-none flex-1 text-mahogany font-bold placeholder:text-mahogany/20 min-w-0" 
+                        />
+                        {isCheckingSlug ? (
+                            <div className="w-4 h-4 border-2 border-mahogany border-t-transparent rounded-full animate-spin shrink-0"></div>
+                        ) : slug && (
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${isSlugAvailable ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        )}
+                    </div>
+                    {slug && !isSlugAvailable && <p className="text-red-500 text-xs font-bold ml-2">URL already taken. Try another one!</p>}
+                </div>
+
+                <div className="w-full flex flex-col gap-2">
+                    <span className="text-mahogany font-bold text-[14px] uppercase ml-2">Share link</span>
+                    <div className="flex items-center gap-3 bg-vanilla/50 p-4 rounded-2xl border-2 border-mahogany/10 group">
+                        <input type="text" readOnly value={generatedLink} className="bg-transparent border-none outline-none flex-1 text-mahogany font-medium" />
+                        <button onClick={() => { navigator.clipboard.writeText(generatedLink); setToast({ show: true, message: "Copied!", type: "success" }); }} className="bg-mahogany text-rice px-6 py-2 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-md">Copy</button>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <button onClick={handleSave} disabled={!isSlugAvailable} className="bg-vanilla text-mahogany px-8 py-3 rounded-xl font-bold border-2 border-mahogany/10 hover:bg-white transition-all disabled:opacity-50">Save URL</button>
+                    <button onClick={() => setShowPublishPopup(false)} className="text-tobacco font-bold hover:text-mahogany px-4">Close</button>
+                </div>
+            </div>
         </div>
       )}
 

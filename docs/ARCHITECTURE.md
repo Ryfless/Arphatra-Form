@@ -48,18 +48,33 @@ Backend diorganisir menggunakan pola standar Express:
 *   `title` (String): Judul form.
 *   `questions` (Array of Objects): Struktur pertanyaan (JSON).
 *   `theme` (Object): Konfigurasi warna dan gambar.
+*   `slug` (String): URL kustom (opsional).
 *   **Sub-collection: `responses`**
     *   `id`: ID jawaban.
     *   `submittedAt`: Timestamp.
     *   `answers` (Object): Key-value pair `{ questionId: value }`.
 
-## 4. Authentication Flow
+## 4. Deployment Strategy
 
-Arphatra mendukung dua metode autentikasi:
-1.  **Email/Password:** Login tradisional menggunakan Firebase Auth REST API.
-2.  **Google OAuth:** Menggunakan Firebase SDK di frontend untuk mendapatkan `idToken`, yang kemudian divalidasi oleh Backend menggunakan `firebase-admin` untuk menjamin keamanan data dan sinkronisasi profil otomatis.
+Arphatra menggunakan **Firebase Suite** untuk infrastruktur produksi:
+*   **Hosting:** Melayani Landing Page (`/`) dan CMS Dashboard (`/cms/`). SPA Routing dikelola melalui `firebase.json` rewrites.
+*   **Cloud Functions (Gen 2):** Backend Express di-deploy ke region **Singapore (`asia-southeast1`)** untuk latensi rendah bagi pengguna di Asia Tenggara.
+*   **Storage:** Digunakan untuk menyimpan aset statis seperti gambar profil dan banner form.
 
-## 5. Security Measures
+## 5. Key Features Implementation
+
+### Custom URL Slugs
+User dapat menentukan URL kustom untuk form mereka (misal: `arphatra.web.app/f/lomba`).
+*   **Backend:** `getFormById` melakukan lookup ganda (mencoba mencari `id` (UUID) lalu `slug`).
+*   **Frontend:** Menampilkan indikator ketersediaan slug secara real-time melalui endpoint `/forms/check-slug`.
+
+### Multi-language (i18n)
+Mendukung Bahasa Inggris dan Bahasa Indonesia melalui `LanguageProvider`. Pilihan bahasa disimpan di Firestore dalam pengaturan profil user dan disinkronkan saat login.
+
+### Google OAuth
+Menggunakan Firebase SDK di frontend untuk mendapatkan `idToken`, yang kemudian divalidasi oleh Backend menggunakan `firebase-admin` untuk menjamin keamanan data dan sinkronisasi profil otomatis.
+
+## 6. Security Measures
 
 1.  **JWT Authentication:** Semua request sensitif harus menyertakan header `Authorization: Bearer <token>`.
 2.  **CORS Policy:** Dikonfigurasi untuk hanya menerima request dari domain frontend yang diizinkan.

@@ -14,3 +14,15 @@ Thumbs.db
 .env.local
 *.json.key
 serviceAccountKey.json
+
+# Build artifacts
+dist/
+frontend/dist/
+frontapp/dist/
+public_html/
+
+# Firebase
+.firebase/
+firebase-debug.log
+auth-debug.log
+functions-debug.log

@@ -1,6 +1,6 @@
 # 📡 API Reference
 
-Base URL: `http://localhost:5000/api`
+Base URL: `https://asia-southeast1-pentataste-ff444.cloudfunctions.net/api` (Singapore Region)
 
 ## Authentication
 
@@ -31,8 +31,8 @@ Base URL: `http://localhost:5000/api`
 
 ### Get Single Form
 `GET /forms/:formId`
-*   **Access:** Public
-*   **Response:** `{ id, title, questions, theme, ... }`
+*   **Access:** Public (Supports UUID or Slug)
+*   **Response:** `{ id, title, questions, theme, slug, ... }`
 
 ### Create Form
 `POST /forms`
@@ -43,7 +43,8 @@ Base URL: `http://localhost:5000/api`
       "title": "My Form",
       "description": "...",
       "questions": [...],
-      "theme": {...}
+      "theme": {...},
+      "slug": "custom-url-name"
     }
     ```
 *   **Response:** `{ id, status: "success" }`
@@ -59,13 +60,18 @@ Base URL: `http://localhost:5000/api`
 *   **Headers:** `Authorization: Bearer <token>`
 *   **Response:** `{ message: "Form deleted" }`
 
+### Check Slug Availability
+`GET /forms/check-slug?slug=my-custom-url`
+*   **Headers:** `Authorization: Bearer <token>`
+*   **Response:** `{ status: "success", available: true/false }`
+
 ---
 
 ## Responses
 
 ### Submit Response
 `POST /forms/:formId/submit`
-*   **Access:** Public
+*   **Access:** Public (Supports UUID or Slug)
 *   **Body:**
     ```json
     {

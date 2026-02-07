@@ -10,6 +10,7 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/form/view/:formId" element={<ViewFormPage />} />
+      <Route path="/f/:formId" element={<ViewFormPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/contact" element={<ContactPage />} />

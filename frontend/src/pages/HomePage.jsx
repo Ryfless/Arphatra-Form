@@ -14,6 +14,27 @@ const tabs = [
   { key: "2days", label: "2days" },
 ];
 
+const SkeletonItem = () => (
+  <div className="grid grid-cols-[1.5fr_1fr_40px] gap-2 md:gap-4 p-3 md:p-5 rounded-2xl md:rounded-3xl items-center border-2 border-transparent bg-mahogany/5 animate-pulse">
+    <div className="flex items-center gap-2 md:gap-4 md:pl-4">
+      <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-mahogany/10 shrink-0"></div>
+      <div className="h-4 md:h-6 bg-mahogany/10 rounded-md w-32 md:w-48"></div>
+    </div>
+    <div className="h-3 md:h-4 bg-mahogany/10 rounded-md w-12 md:w-20 mx-auto"></div>
+    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-mahogany/10 mx-auto"></div>
+  </div>
+);
+
+const SkeletonGridItem = () => (
+  <div className="flex flex-col gap-3 animate-pulse">
+    <div className="aspect-[4/3] rounded-[25px] md:rounded-[35px] bg-mahogany/5 border-2 border-mahogany/5"></div>
+    <div className="px-2 space-y-2">
+      <div className="h-4 bg-mahogany/10 rounded-md w-3/4"></div>
+      <div className="h-3 bg-mahogany/10 rounded-md w-1/2"></div>
+    </div>
+  </div>
+);
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -44,7 +65,7 @@ export default function HomePage() {
   const confirmDeleteForm = async () => {
     if (!formToDelete) return;
     try {
-        await apiRequest(`/api/forms/${formToDelete}`, { method: "DELETE" });
+        await apiRequest(`/forms/${formToDelete}`, { method: "DELETE" });
         setRealForms(prev => ({
             today: prev.today.filter(f => f.id !== formToDelete),
             yesterday: prev.yesterday.filter(f => f.id !== formToDelete),
@@ -68,8 +89,8 @@ export default function HomePage() {
         
         // Parallel fetch for speed
         const [formsRes, settingsRes] = await Promise.all([
-            apiRequest("/api/forms"),
-            apiRequest("/api/users/settings")
+            apiRequest("/forms"),
+            apiRequest("/users/settings")
         ]);
 
         // Handle Forms
@@ -326,31 +347,31 @@ export default function HomePage() {
                     </div>
 
                     <div className="flex flex-col gap-2 md:gap-4 flex-1 overflow-y-auto custom-scrollbar px-1 md:px-2 min-h-0 pb-4">
-                        {formsForTab.length === 0 && (
-                            <div 
-                                onClick={() => navigate("/form/create")}
-                                className="stagger-item group/quick bg-mahogany/5 border-2 border-dashed border-mahogany/20 p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between cursor-pointer hover:bg-mahogany/10 hover:border-mahogany/40 transition-all mb-2"
-                            >
-                                <div className="flex items-center gap-3 md:gap-4">
-                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-mahogany flex items-center justify-center shadow-md group-hover/quick:scale-110 transition-transform">
-                                        <img src="/assets/icons/cms-form/add.svg" alt="" className="w-4 h-4 md:w-5 md:h-5 invert" />
-                                                          </div>
-                                                          <div className="flex flex-col">
-                                                              <span className="text-sm md:text-lg font-bold text-mahogany">{t("ignite_project")}</span>
-                                                              <span className="text-[10px] md:text-xs text-tobacco/60">{t("start_blank")}</span>
-                                                          </div>
-                                                      </div>
-                                                      <div className="bg-mahogany/10 px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold text-mahogany opacity-0 group-hover/quick:opacity-100 transition-opacity">
-                                                          {t("create_now")}
-                                                      </div>
-                                                    </div>
-                                                  )}
-                                    
-                                                  {formsForTab.length === 0 ? (
-                                                    <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-40">
-                                                      <p className="text-lg md:text-xl font-bold">{t("no_forms")}</p>
-                                                    </div>
-                                    
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => <SkeletonItem key={i} />)
+                        ) : formsForTab.length === 0 ? (
+                            <>
+                                <div 
+                                    onClick={() => navigate("/form/create")}
+                                    className="stagger-item group/quick bg-mahogany/5 border-2 border-dashed border-mahogany/20 p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between cursor-pointer hover:bg-mahogany/10 hover:border-mahogany/40 transition-all mb-2"
+                                >
+                                    <div className="flex items-center gap-3 md:gap-4">
+                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-mahogany flex items-center justify-center shadow-md group-hover/quick:scale-110 transition-transform">
+                                            <img src="/assets/icons/cms-form/add.svg" alt="" className="w-4 h-4 md:w-5 md:h-5 invert" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm md:text-lg font-bold text-mahogany">{t("ignite_project")}</span>
+                                            <span className="text-[10px] md:text-xs text-tobacco/60">{t("start_blank")}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-mahogany/10 px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold text-mahogany opacity-0 group-hover/quick:opacity-100 transition-opacity">
+                                        {t("create_now")}
+                                    </div>
+                                </div>
+                                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-40">
+                                    <p className="text-lg md:text-xl font-bold">{t("no_forms")}</p>
+                                </div>
+                            </>
                         ) : (
                             formsForTab.map((form, idx) => {
                                 const isSelected = selectedRowId === form.id;
@@ -380,7 +401,7 @@ export default function HomePage() {
                                             {activeFormMenu === form.id && (
                                                 <div className="absolute right-0 top-full mt-2 w-40 md:w-48 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-mahogany/5 py-1 md:py-2 z-[150] text-mahogany" onClick={(e) => e.stopPropagation()}>
                                                     <button onClick={() => navigate(`/form/edit/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("edit")}</button>
-                                                    <button onClick={() => window.open(`http://localhost:5174/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
+                                                    <button onClick={() => window.open(form.slug ? `${window.location.origin.replace('/cms', '')}/f/${form.slug}` : `${window.location.origin.replace('/cms', '')}/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
                                                     <button onClick={() => setFormToDelete(form.id)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors text-sm md:text-base font-bold mt-1 border-t border-mahogany/5 border-none bg-transparent cursor-pointer">{t("delete")}</button>
                                                 </div>
                                             )}
@@ -394,7 +415,9 @@ export default function HomePage() {
             ) : (
                 /* GRID VIEW */
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-8 flex-1 overflow-y-auto custom-scrollbar px-1 md:px-2 min-h-0 pb-4 animate-fade-in pt-4">
-                    {formsForTab.length === 0 ? (
+                    {isLoading ? (
+                        Array.from({ length: 6 }).map((_, i) => <SkeletonGridItem key={i} />)
+                    ) : formsForTab.length === 0 ? (
                         <div className="col-span-full flex flex-col items-center justify-center h-full text-center opacity-40">
                             <p className="text-lg md:text-xl font-bold">No forms found</p>
                         </div>
@@ -419,7 +442,7 @@ export default function HomePage() {
                                         {activeFormMenu === form.id && (
                                             <div className="absolute right-0 top-full mt-2 w-40 md:w-48 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-mahogany/5 py-1 md:py-2 z-[150] text-mahogany" onClick={(e) => e.stopPropagation()}>
                                                 <button onClick={() => navigate(`/form/edit/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("edit")}</button>
-                                                <button onClick={() => window.open(`http://localhost:5174/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
+                                                <button onClick={() => window.open(form.slug ? `https://arphatra.web.app/f/${form.slug}` : `https://arphatra.web.app/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
                                                 <button onClick={() => setFormToDelete(form.id)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors text-sm md:text-base font-bold mt-1 border-t border-mahogany/5 border-none bg-transparent cursor-pointer">{t("delete")}</button>
                                             </div>
                                         )}
