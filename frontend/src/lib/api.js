@@ -1,4 +1,4 @@
-import { getToken } from "./storage";
+import { getToken, clearAuthStorage } from "./storage";
 
 const BASE_URL = "http://localhost:5000"; // Kembali menggunakan localhost
 
@@ -22,11 +22,11 @@ export const apiRequest = async (endpoint, options = {}) => {
   const data = await response.json();
 
   if (!response.ok) {
-    // Jika token expired atau tidak valid (401), logout paksa
+    // Jika token expired atau tidak valid (401), pemicu popup sesi berakhir
     if (response.status === 401) {
-        localStorage.removeItem("at_token");
-        localStorage.removeItem("at_user");
-        window.location.href = "/login";
+        window.dispatchEvent(new CustomEvent("session-expired"));
+        // Tetap throw error agar pemanggil tahu request gagal
+        throw new Error("Session expired");
     }
     throw new Error(data.message || "Something went wrong");
   }

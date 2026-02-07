@@ -6,7 +6,7 @@ import { config } from "./config/config.js";
 import authRoutes from "./routes/authRoutes.js";
 import formRoutes from "./routes/formRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-// import userRoutes from "./routes/userRoutes.js"; // Uncomment jika sudah siap
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -31,7 +31,7 @@ app.use((req, res, next) => {
 app.use("/", authRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/upload", uploadRoutes);
-// app.use("/users", userRoutes);
+app.use("/api/users", userRoutes);
 
 // Root Endpoint (Health Check)
 app.get("/", (req, res) => {

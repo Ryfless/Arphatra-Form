@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Toast from "@/components/Toast.jsx";
 import { API_BASE_URL, STORAGE_KEYS } from "@/lib/config.js";
+import { getToken } from "@/lib/storage.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const emptyOtp = Array.from({ length: 6 }, () => "");
@@ -19,7 +20,10 @@ export default function OtpPage() {
   useEffect(() => {
     document.title = "OTP Verification - Arphatra";
     const storedEmail = localStorage.getItem(STORAGE_KEYS.RESET_EMAIL);
-    if (storedEmail) setEmail(storedEmail);
+    if (storedEmail) {
+      setEmail(storedEmail);
+      setStage("otp"); // Skip email input if already known
+    }
   }, []);
 
   useEffect(() => {
@@ -37,8 +41,13 @@ export default function OtpPage() {
   };
 
   const handleBackToLogin = () => {
+    const token = getToken();
     clearResetStorage();
-    navigate("/login");
+    if (token) {
+      navigate("/profile");
+    } else {
+      navigate("/login");
+    }
   };
 
   const handleEmailSubmit = async (event) => {
@@ -171,7 +180,9 @@ export default function OtpPage() {
                 </button>
               </form>
               <div className="text-center">
-                <button onClick={handleBackToLogin} className="text-mahogany font-bold underline hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none text-base">Return to Sign In</button>
+                <button onClick={handleBackToLogin} className="text-mahogany font-bold underline hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none text-base">
+                  {getToken() ? "Return to Profile" : "Return to Sign In"}
+                </button>
               </div>
             </div>
           )}

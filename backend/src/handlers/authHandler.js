@@ -36,7 +36,23 @@ export const login = async (req, res) => {
     const authResponse = await axios.post(config.firebaseSignInUrl, { email, password, returnSecureToken: true });
     const { localId, idToken, refreshToken } = authResponse.data;
 
-    return res.status(200).json({ success: true, message: "login berhasil", data: { idToken, refreshToken } });
+    // Fetch user data from Firestore
+    const userSnapshot = await db.collection("users").where("uid", "==", localId).limit(1).get();
+    if (userSnapshot.empty) {
+      return res.status(404).json({ success: false, message: "user data not found" });
+    }
+    
+    const userData = userSnapshot.docs[0].data();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "login berhasil", 
+      data: { 
+        idToken, 
+        refreshToken,
+        user: userData 
+      } 
+    });
   } catch (error) {
     return res.status(401).json({ success: false, message: "login gagal" });
   }
@@ -84,7 +100,7 @@ export const forgotPassword = async (req, res) => {
     if (userSnapshot.empty) return res.status(404).json({ success: false, message: "email tidak terdaftar" });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = Date.now() + 1 * 60 * 1000; 
+    const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
 
     await db.collection("otps").doc(email).set({ email, otp, expiresAt: otpExpiry });
 
@@ -104,33 +120,55 @@ export const forgotPassword = async (req, res) => {
 // --- 6. RESET PASSWORD) ---
 export const resetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
-    const otpDoc = await db.collection("otps").doc(email).get();
-
-    if (!otpDoc.exists) return res.status(400).json({ success: false, message: "otp tidak ditemukan" });
-    const otpData = otpDoc.data();
-
-    if (otpData.otp !== otp) return res.status(400).json({ success: false, message: "otp salah" });
-
-    if (Date.now() > otpData.expiresAt) {
-      await db.collection("otps").doc(email).delete();
-      return res.status(400).json({ success: false, message: "otp kadaluarsa" });
+    let { email, otp, newPassword } = req.body;
+    
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ success: false, message: "Email, OTP, dan Password baru diperlukan" });
     }
 
-    // TERMINATE DATA OTP
-    await db.collection("otps").doc(email).delete();
+    email = email.trim().toLowerCase();
+
+    const otpDoc = await db.collection("otps").doc(email).get();
+
+    if (!otpDoc.exists) {
+      console.log(`OTP reset failed: No OTP found for email ${email}`);
+      return res.status(400).json({ success: false, message: "OTP tidak ditemukan atau sudah kadaluarsa" });
+    }
+    
+    const otpData = otpDoc.data();
+
+    if (otpData.otp !== otp) {
+      console.log(`OTP reset failed: Wrong OTP for ${email}. Expected ${otpData.otp}, got ${otp}`);
+      return res.status(400).json({ success: false, message: "OTP salah" });
+    }
+
+    if (Date.now() > otpData.expiresAt) {
+      console.log(`OTP reset failed: OTP expired for ${email}`);
+      await db.collection("otps").doc(email).delete();
+      return res.status(400).json({ success: false, message: "OTP kadaluarsa" });
+    }
 
     const userSnapshot = await db.collection("users").where("email", "==", email).limit(1).get();
+    
+    if (userSnapshot.empty) {
+      console.log(`OTP reset failed: No user found with email ${email}`);
+      return res.status(404).json({ success: false, message: "User tidak ditemukan" });
+    }
+
     const userUid = userSnapshot.docs[0].data().uid;
 
+    // Update password in Firebase Auth
     await auth.updateUser(userUid, { password: newPassword });
+    
+    // Success: Delete OTP
+    await db.collection("otps").doc(email).delete();
     
     return res.status(200).json({ success: true, message: "berhasil update password" });
 
   } catch (error) {
-    console.log("Error Detail:", error); // Lihat pesan aslinya di terminal cmd/vscode
-    return res.status(500).json({ success: false, message: "gagal update password" });
-}
+    console.error("Reset Password Error Detail:", error);
+    return res.status(500).json({ success: false, message: "gagal update password", error: error.message });
+  }
 };
 
 // --- 7. GET PROFILE ---

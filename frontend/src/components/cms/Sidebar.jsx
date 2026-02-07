@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "@/lib/api.js";
 import { getToken } from "@/lib/storage.js";
+import ImageCropModal from "@/components/ImageCropModal.jsx";
 
 export default function Sidebar({ onClose, theme, onUpdateTheme }) {
   const [open, setOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("theme"); // 'theme' or 'forms'
   const [myForms, setMyForms] = useState([]);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
 
   const handleSidebarUpload = async (file) => {
@@ -26,6 +29,24 @@ export default function Sidebar({ onClose, theme, onUpdateTheme }) {
         console.error("Upload failed", error);
         return null;
     }
+  };
+
+  const handleBannerSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImage(reader.result);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleConfirmBannerCrop = async (blob) => {
+    setCropModalOpen(false);
+    const url = await handleSidebarUpload(blob);
+    if (url) onUpdateTheme({ bannerImage: url });
   };
 
   useEffect(() => {
@@ -53,19 +74,27 @@ export default function Sidebar({ onClose, theme, onUpdateTheme }) {
   ];
 
   return (
-    <div className="fixed left-0 top-[80px] bottom-0 w-[350px] bg-rice border-r border-mahogany/10 shadow-2xl flex flex-col font-poppins z-[60] animate-slide-in-left">
+    <div className="fixed left-0 top-0 md:top-[80px] bottom-0 w-full md:w-[350px] bg-rice border-r border-mahogany/10 shadow-2xl flex flex-col font-poppins z-[110] md:z-[60] animate-slide-in-left">
+      <ImageCropModal 
+        open={cropModalOpen}
+        image={selectedImage}
+        aspectRatio="4/1"
+        title="Adjust Header Image"
+        onCancel={() => setCropModalOpen(false)}
+        onConfirm={handleConfirmBannerCrop}
+      />
       {/* Header with Tabs */}
-      <div className="h-[80px] bg-rice border-b border-mahogany/5 flex items-center px-8 justify-between shrink-0">
-        <div className="flex gap-6">
-            <button onClick={() => setActiveTab("theme")} className={`text-[20px] font-bold transition-colors ${activeTab === 'theme' ? 'text-mahogany border-b-2 border-mahogany' : 'text-mahogany/40 hover:text-mahogany'}`}>Theme</button>
-            <button onClick={() => setActiveTab("forms")} className={`text-[20px] font-bold transition-colors ${activeTab === 'forms' ? 'text-mahogany border-b-2 border-mahogany' : 'text-mahogany/40 hover:text-mahogany'}`}>My Forms</button>
+      <div className="h-[70px] md:h-[80px] bg-rice border-b border-mahogany/5 flex items-center px-6 md:px-8 justify-between shrink-0 pt-2 md:pt-0">
+        <div className="flex gap-4 md:gap-6">
+            <button onClick={() => setActiveTab("theme")} className={`text-[16px] md:text-[20px] font-bold transition-colors ${activeTab === 'theme' ? 'text-mahogany border-b-2 border-mahogany' : 'text-mahogany/40 hover:text-mahogany'}`}>Theme</button>
+            <button onClick={() => setActiveTab("forms")} className={`text-[16px] md:text-[20px] font-bold transition-colors ${activeTab === 'forms' ? 'text-mahogany border-b-2 border-mahogany' : 'text-mahogany/40 hover:text-mahogany'}`}>My Forms</button>
         </div>
         <button onClick={() => { setOpen(false); onClose && onClose(); }} className="p-2 hover:bg-mahogany/5 rounded-full transition-all group">
           <img src="/assets/icons/cms-form/close-icon.svg" alt="Close" className="w-5 h-5 opacity-50 group-hover:opacity-100" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-8 md:gap-10 custom-scrollbar">
         {/* --- TAB: THEME --- */}
         {activeTab === "theme" && (
             <>
@@ -130,13 +159,7 @@ export default function Sidebar({ onClose, theme, onUpdateTheme }) {
                     id="header-upload" 
                     accept="image/*" 
                     className="hidden" 
-                    onChange={async (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const url = await handleSidebarUpload(file);
-                            if (url) onUpdateTheme({ bannerImage: url });
-                        }
-                    }}
+                    onChange={handleBannerSelect}
                 />
                 <label 
                     htmlFor="header-upload"

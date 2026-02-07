@@ -6,11 +6,13 @@ import Popup from "@/components/Popup.jsx";
 import Toast from "@/components/Toast.jsx";
 import { API_BASE_URL } from "@/lib/config.js";
 import { clearAuthStorage, saveToken, saveUser, setIsNewUser } from "@/lib/storage.js";
+import { useLanguage } from "@/lib/i18n.jsx";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,20 +47,17 @@ export default function LoginPage() {
         const data = await res.json();
         if (res.ok && data.success) {
             saveToken(idToken);
-            saveUser({
-                fullName: user.displayName || "Google User",
-                email: user.email,
-                id: user.uid,
-            });
+            // Use the full user data from backend (includes avatarUrl/photoURL)
+            saveUser(data.data);
             setIsNewUser(data.isNewUser || false);
-            showToast("Login successful", "success");
+            showToast(t("login_success"), "success");
             setTimeout(() => navigate("/homepage"), 1200);
         } else {
             throw new Error(data.message || "Backend sync failed");
         }
     } catch (error) {
         console.error("Google Login Error:", error);
-        showToast("Google login failed", "error");
+        showToast(t("login_failed"), "error");
     } finally {
         setLoading(false);
     }
@@ -73,8 +72,8 @@ export default function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!EMAIL_REGEX.test(email)) return showToast("Email format is incorrect", "error");
-    if (!password) return showToast("Password is required", "error");
+    if (!EMAIL_REGEX.test(email)) return showToast(t("email_invalid"), "error");
+    if (!password) return showToast(t("password_required"), "error");
 
     setLoading(true);
     try {
@@ -101,14 +100,11 @@ export default function LoginPage() {
 
       if (isHttpOk && hasSuccessFlag && hasToken && !containsErrorKeyword) {
         saveToken(data.data.idToken);
-        saveUser({
-          fullName: data.data?.fullName || email,
-          email,
-          id: data.data?.userId || email.split("@")[0],
-        });
+        // Save the full user object from backend (which includes avatarUrl)
+        saveUser(data.data.user);
         setIsNewUser(false);
 
-        showToast("Login successful", "success");
+        showToast(t("login_success"), "success");
         setTimeout(() => navigate("/homepage"), 1200);
         return;
       }
@@ -117,14 +113,14 @@ export default function LoginPage() {
       setIsNewUser(false);
 
       const errorMessage = message.includes("register") || message.includes("not found")
-        ? "Account not registered. Please register first."
-        : "Incorrect email or password.";
+        ? t("account_not_registered")
+        : t("incorrect_credentials");
       showToast(errorMessage, "error");
     } catch (error) {
       setLoading(false);
       clearAuthStorage();
       setIsNewUser(false);
-      showToast("Login failed. Please try again.", "error");
+      showToast(t("login_failed"), "error");
     }
   };
 
@@ -141,15 +137,15 @@ export default function LoginPage() {
 
       <div className="flex flex-col md:flex-row w-full max-w-[1200px] items-center relative py-4 md:py-8 gap-8 md:gap-12">
         <div className="flex-1 flex flex-col justify-center md:pr-12 animate-reveal-form w-full max-w-md md:max-w-none">
-          <h1 className="text-[32px] sm:text-[38px] md:text-[44px] font-bold mb-2 text-mahogany text-center md:text-left">Welcome Back!</h1>
+          <h1 className="text-[32px] sm:text-[38px] md:text-[44px] font-bold mb-2 text-mahogany text-center md:text-left">{t("welcome_back")}</h1>
           <p className="text-[16px] md:text-[18px] mb-6 md:mb-8 text-mahogany opacity-90 text-center md:text-left">
-            Sign in to continue and access your account.
+            {t("sign_in_subtitle")}
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <input
               type="email"
-              placeholder="Email"
+              placeholder={t("email")}
               aria-label="Email address"
               autoFocus
               className="w-full rounded-full px-5 py-3 border-2 border-mahogany bg-rice outline-none focus:ring-0 disabled:opacity-60"
@@ -162,7 +158,7 @@ export default function LoginPage() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                placeholder={t("password")}
                 aria-label="Password"
                 className="w-full rounded-full px-5 py-3 pr-12 border-2 border-mahogany bg-rice outline-none focus:ring-0 disabled:opacity-60"
                 value={password}
@@ -187,7 +183,7 @@ export default function LoginPage() {
 
             <div className="text-right -mt-2">
               <Link to="/otp" className="font-medium text-mahogany hover:underline">
-                Forgot password?
+                {t("forgot_password")}
               </Link>
             </div>
 
@@ -196,12 +192,12 @@ export default function LoginPage() {
               className="rounded-full text-lg font-semibold py-3 transition-all bg-mahogany text-vanilla hover:shadow-btn-hover disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               disabled={loading}
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? t("signing_in") : t("sign_in")}
             </button>
 
             <div className="flex items-center gap-4 my-2">
                 <div className="flex-1 h-px bg-mahogany/20"></div>
-                <span className="text-mahogany/40 text-sm font-bold">OR</span>
+                <span className="text-mahogany/40 text-sm font-bold">{t("or")}</span>
                 <div className="flex-1 h-px bg-mahogany/20"></div>
             </div>
 
@@ -212,13 +208,13 @@ export default function LoginPage() {
               disabled={loading}
             >
               <img src="/assets/icons/login/uim_google.svg" alt="" className="w-6 h-6" />
-              <span>Sign in with Google</span>
+              <span>{t("sign_in_google")}</span>
             </button>
           </form>
 
           <p className="text-center mt-6 text-mahogany">
-            Don't have an account?{" "}
-            <Link to="/register" className="font-bold underline">Register</Link>
+            {t("no_account")}{" "}
+            <Link to="/register" className="font-bold underline">{t("register")}</Link>
           </p>
         </div>
 

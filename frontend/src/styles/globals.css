@@ -114,6 +114,38 @@
   input:focus {
     @apply outline-none ring-0 border-mahogany;
   }
+
+  /* Hide native calendar icon in date inputs */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+  }
+}
+
+/* Custom Text Selection Color */
+::selection {
+  background-color: rgba(88, 71, 56, 0.2);
+  color: #584738;
+}
+
+/* Specific fix for date inputs to avoid selecting dd/mm/yyyy segments */
+input[type="date"]::selection {
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  background: transparent;
+}
+
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  background: transparent;
+}
+
+input[type="date"]:focus {
+  outline: none;
 }
 
 /* ============================= */

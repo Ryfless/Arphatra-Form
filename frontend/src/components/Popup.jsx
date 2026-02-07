@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/i18n.jsx";
+
 export default function Popup({ 
   open, 
   title, 
@@ -7,9 +9,10 @@ export default function Popup({
   onClose, 
   onConfirm, // New prop for confirmation action
   onCancel,  // New prop for cancel action
-  confirmText = "Yes, delete it",
-  cancelText = "Cancel"
+  confirmText,
+  cancelText
 }) {
+  const { t } = useLanguage();
   if (!open) return null;
 
   const isSuccess = type === "success";
@@ -20,7 +23,9 @@ export default function Popup({
   const buttonBg = isSuccess ? "bg-mahogany" : isDanger ? "bg-red-600" : "bg-mahogany";
 
   const displayMessage = message || description;
-  const displayTitle = title || (isSuccess ? "Success!" : isDanger ? "Are you sure?" : "Attention");
+  const displayTitle = title || (isSuccess ? t("success") : isDanger ? t("are_you_sure") : t("attention"));
+  const displayConfirmText = confirmText || t("yes_delete");
+  const displayCancelText = cancelText || t("cancel");
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fade-in" role="dialog" aria-live="polite">
@@ -56,14 +61,14 @@ export default function Popup({
                         type="button"
                         onClick={onCancel || onClose}
                     >
-                        {cancelText}
+                        {displayCancelText}
                     </button>
                     <button
                         className={`${buttonBg} text-rice px-8 py-3 rounded-2xl text-lg font-bold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex-1 border-none`}
                         type="button"
                         onClick={onConfirm}
                     >
-                        {confirmText}
+                        {displayConfirmText}
                     </button>
                 </>
             ) : (
@@ -72,7 +77,7 @@ export default function Popup({
                     type="button"
                     onClick={onClose}
                 >
-                    Got it
+                    {t("got_it")}
                 </button>
             )}
         </div>

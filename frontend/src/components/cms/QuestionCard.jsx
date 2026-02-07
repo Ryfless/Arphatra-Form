@@ -29,7 +29,9 @@ export default function QuestionCard({
   onDragEnd,
   isDragging,
   hasError, 
-  onChangeResponse
+  value,
+  onChangeResponse,
+  onDateClick
 }) {
   const [localTitle, setLocalTitle] = useState(question.title);
   const [isTypeSelectorOpen, setIsTypeSelectorOpen] = useState(false);
@@ -64,7 +66,7 @@ export default function QuestionCard({
 
   return (
     <div 
-        className={`relative w-full max-w-[1000px] flex justify-center group/card-wrapper transition-all duration-300 ${isDragging ? 'opacity-40 scale-95' : 'opacity-100'} ${isActive ? 'z-30' : 'z-0'}`}
+        className={`relative w-full max-w-[1000px] flex justify-center group/card-wrapper ${isDragging ? '' : 'transition-all duration-300'} ${isDragging ? 'opacity-40 scale-95' : 'opacity-100'} ${isActive ? 'z-30' : 'z-0'}`}
         draggable={!isPreview}
         onDragStart={(e) => onDragStart(e, question.id)}
         onDragEnter={(e) => onDragEnter(e, question.id)}
@@ -74,10 +76,10 @@ export default function QuestionCard({
       {/* INNER CARD - REMOVED overflow-hidden */}
       <div 
         onClick={onClick}
-        className={`w-full rounded-[35px] shadow-sm flex flex-col relative shrink-0 transition-all duration-300 ${
+        className={`w-full rounded-[25px] md:rounded-[35px] shadow-sm flex flex-col relative shrink-0 transition-all duration-300 ${
           isActive 
-            ? "h-auto p-10 ring-2 ring-white/50 shadow-xl scale-[1.01]" 
-            : `h-auto p-10 ${!isPreview ? 'hover:brightness-95 cursor-pointer' : ''}`
+            ? "h-auto p-6 md:p-10 ring-2 ring-white/50 shadow-xl scale-[1.01]" 
+            : `h-auto p-6 md:p-10 ${!isPreview ? 'hover:brightness-95 cursor-pointer' : ''}`
         } ${hasError ? 'ring-4 ring-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)] border-red-500 animate-[shake_0.5s_ease-in-out]' : ''}`}
         style={{ backgroundColor: theme.cardColor }}
       >
@@ -113,25 +115,25 @@ export default function QuestionCard({
           <div className="flex justify-between items-start gap-4 pt-4">
               <div className="flex flex-col flex-1 gap-2">
                 {isPreview ? (
-                    <h2 className={`${isSection ? 'text-[28px]' : 'text-[32px]'} font-bold text-mahogany`}>
+                    <h2 className={`${isSection ? 'text-[22px] md:text-[28px]' : 'text-[24px] md:text-[32px]'} font-bold text-mahogany`}>
                         {localTitle} {question.required && <span className="text-red-500">*</span>}
                     </h2>
                 ) : (
                     <>
                         {(!isSection && !['text', 'image', 'video'].includes(question.type)) && (
-                            <input type="text" placeholder="Question" className="text-[36px] font-bold text-mahogany bg-transparent border-b border-transparent focus:border-mahogany outline-none w-full placeholder:text-mahogany/40" value={localTitle} onChange={handleTitleChange} />
+                            <input type="text" placeholder="Question" className="text-[24px] md:text-[36px] font-bold text-mahogany bg-transparent border-b border-transparent focus:border-mahogany outline-none w-full placeholder:text-mahogany/40" value={localTitle} onChange={handleTitleChange} />
                         )}
                         {(['text', 'image', 'video'].includes(question.type) || isSection) && (
-                            <input type="text" placeholder={isSection ? "Section Title" : "Text Title"} className="text-[28px] font-bold text-mahogany bg-transparent border-b border-transparent focus:border-mahogany outline-none w-full placeholder:text-mahogany/40" value={localTitle} onChange={handleTitleChange} />
+                            <input type="text" placeholder={isSection ? "Section Title" : "Text Title"} className="text-[22px] md:text-[28px] font-bold text-mahogany bg-transparent border-b border-transparent focus:border-mahogany outline-none w-full placeholder:text-mahogany/40" value={localTitle} onChange={handleTitleChange} />
                         )}
                     </>
                 )}
                 
                 {(isSection || question.type === 'text') && (
                     isPreview ? (
-                        <p className="text-[18px] font-medium text-mahogany/80">{question.description}</p>
+                        <p className="text-[16px] md:text-[18px] font-medium text-mahogany/80">{question.description}</p>
                     ) : (
-                        <textarea placeholder="Description (Optional)" className="text-[18px] font-medium text-mahogany bg-transparent border-none outline-none resize-none w-full h-auto min-h-[40px] placeholder:text-mahogany/30" value={question.description || ""} onChange={(e) => onUpdate(question.id, { ...question, description: e.target.value })} />
+                        <textarea placeholder="Description (Optional)" className="text-[16px] md:text-[18px] font-medium text-mahogany bg-transparent border-none outline-none resize-none w-full h-auto min-h-[40px] placeholder:text-mahogany/30" value={question.description || ""} onChange={(e) => onUpdate(question.id, { ...question, description: e.target.value })} />
                     )
                 )}
               </div>
@@ -145,19 +147,19 @@ export default function QuestionCard({
                     onMouseDown={(e) => e.stopPropagation()} 
                     onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 >
-                    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsTypeSelectorOpen(!isTypeSelectorOpen); }} className="flex items-center gap-3 border border-mahogany/20 rounded-lg px-4 py-2 cursor-pointer hover:bg-black/5 transition-colors bg-white/30 shrink-0 min-w-[200px] justify-between">
-                        <div className="flex items-center gap-3">
-                            <img src={`/assets/icons/cms-form/type-collection/${question.typeIcon || 'short-text.svg'}`} alt="" className="w-6 h-6 opacity-60" />
-                            <span className="text-[20px] font-medium text-mahogany">{question.typeLabel || 'Short text'}</span>
+                    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsTypeSelectorOpen(!isTypeSelectorOpen); }} className="flex items-center gap-2 md:gap-3 border border-mahogany/20 rounded-lg px-2 md:px-4 py-1.5 md:py-2 cursor-pointer hover:bg-black/5 transition-colors bg-white/30 shrink-0 min-w-[140px] md:min-w-[200px] justify-between">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <img src={`/assets/icons/cms-form/type-collection/${question.typeIcon || 'short-text.svg'}`} alt="" className="w-4 h-4 md:w-6 md:h-6 opacity-60" />
+                            <span className="text-[14px] md:text-[20px] font-medium text-mahogany truncate max-w-[80px] md:max-w-none">{question.typeLabel || 'Short text'}</span>
                         </div>
-                        <img src="/assets/icons/cms-form/thick-dropdown.svg" alt="" className={`w-4 h-4 opacity-40 transition-transform ${isTypeSelectorOpen ? 'rotate-180' : ''}`} />
+                        <img src="/assets/icons/cms-form/thick-dropdown.svg" alt="" className={`w-3 h-3 md:w-4 md:h-4 opacity-40 transition-transform ${isTypeSelectorOpen ? 'rotate-180' : ''}`} />
                     </div>
                     {isTypeSelectorOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-rice border border-mahogany/10 rounded-2xl shadow-2xl z-[1001] py-2 animate-fade-in max-h-[400px] overflow-y-auto custom-scrollbar" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} >
+                        <div className="absolute top-full right-0 left-auto md:left-0 md:right-0 mt-2 bg-rice border border-mahogany/10 rounded-xl md:rounded-2xl shadow-2xl z-[1001] py-1 md:py-2 animate-fade-in max-h-[300px] md:max-h-[400px] overflow-y-auto custom-scrollbar w-[180px] md:w-auto" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} >
                             {QUESTION_TYPES.map((typeObj) => (
-                                <div key={typeObj.type} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleChangeType(typeObj); }} className={`flex items-center gap-4 px-4 py-3 hover:bg-vanilla transition-colors cursor-pointer ${question.type === typeObj.type ? 'bg-vanilla/50 font-bold' : ''}`}>
-                                    <img src={`/assets/icons/cms-form/type-collection/${typeObj.icon}`} alt="" className="w-5 h-5 opacity-60" />
-                                    <span className="text-[18px] font-medium text-mahogany">{typeObj.label}</span>
+                                <div key={typeObj.type} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleChangeType(typeObj); }} className={`flex items-center gap-3 md:gap-4 px-3 md:px-4 py-2 md:py-3 hover:bg-vanilla transition-colors cursor-pointer ${question.type === typeObj.type ? 'bg-vanilla/50 font-bold' : ''}`}>
+                                    <img src={`/assets/icons/cms-form/type-collection/${typeObj.icon}`} alt="" className="w-4 h-4 md:w-5 md:h-5 opacity-60" />
+                                    <span className="text-[14px] md:text-[18px] font-medium text-mahogany">{typeObj.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -172,35 +174,37 @@ export default function QuestionCard({
             isPreview={isPreview} 
             theme={theme} 
             onUpdate={onUpdate} 
+            value={value}
             onChangeResponse={onChangeResponse}
+            onDateClick={onDateClick}
           />
 
           {/* ERROR MESSAGE */}
           {hasError && (
-            <div className="flex items-center gap-2 mt-4 animate-bounce text-red-600 font-bold text-[16px]">
-                <img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-4 h-4 invert-[0.2] sepia-[1] saturate-[10000%] hue-rotate-[340deg]" />
+            <div className="flex items-center gap-2 mt-4 animate-bounce text-red-600 font-bold text-[14px] md:text-[16px]">
+                <img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-3 h-3 md:w-4 md:h-4 invert-[0.2] sepia-[1] saturate-[10000%] hue-rotate-[340deg]" />
                 <span>This is a required question</span>
             </div>
           )}
 
           {/* Footer Actions */}
           {(isActive && !isPreview) && (
-              <div className="flex items-center justify-end gap-6 mt-4 pt-4 border-t border-mahogany/10 animate-fade-in">
-              <button onClick={(e) => { e.stopPropagation(); onDuplicate(question.id); }} className="opacity-60 hover:opacity-100 transition-opacity" title="Duplicate"><img src="/assets/icons/cms-form/copy.svg" alt="" className="w-6 h-6" /></button>
-              <button onClick={(e) => { e.stopPropagation(); onDelete(question.id); }} className="opacity-60 hover:opacity-100 hover:brightness-50 transition-all" title="Delete"><img src="/assets/icons/cms-form/trash-can.svg" alt="" className="w-6 h-6" /></button>
+              <div className="flex items-center justify-end gap-4 md:gap-6 mt-4 pt-4 border-t border-mahogany/10 animate-fade-in">
+              <button onClick={(e) => { e.stopPropagation(); onDuplicate(question.id); }} className="opacity-60 hover:opacity-100 transition-opacity cursor-pointer border-none bg-transparent" title="Duplicate"><img src="/assets/icons/cms-form/copy.svg" alt="" className="w-5 h-5 md:w-6 md:h-6" /></button>
+              <button onClick={(e) => { e.stopPropagation(); onDelete(question.id); }} className="opacity-60 hover:opacity-100 hover:brightness-50 transition-all cursor-pointer border-none bg-transparent" title="Delete"><img src="/assets/icons/cms-form/trash-can.svg" alt="" className="w-5 h-5 md:w-6 md:h-6" /></button>
               
               {!isSection && !['text', 'image', 'video'].includes(question.type) && (
                 <>
-                    <div className="w-px h-8 bg-mahogany/20 mx-2"></div>
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); onUpdate(question.id, { ...question, required: !question.required }); }}>
-                        <span className="text-[20px] font-medium text-mahogany">Required</span>
-                        <div className={`w-[44px] h-[26px] rounded-[5px] flex items-center px-1 transition-colors ${question.required ? '' : 'bg-[#e4e4e4]'}`} style={{ backgroundColor: question.required ? theme.accentColor : undefined }}>
-                            <div className={`w-[18px] h-[18px] bg-white rounded-full shadow-sm transition-transform duration-300 ${question.required ? 'translate-x-[18px]' : 'translate-x-0'}`}></div>
+                    <div className="w-px h-6 md:h-8 bg-mahogany/20 mx-1 md:mx-2"></div>
+                    <div className="flex items-center gap-2 md:gap-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); onUpdate(question.id, { ...question, required: !question.required }); }}>
+                        <span className="text-[14px] md:text-[20px] font-medium text-mahogany">Required</span>
+                        <div className={`w-[36px] md:w-[44px] h-[20px] md:h-[26px] rounded-[5px] flex items-center px-1 transition-colors ${question.required ? '' : 'bg-[#e4e4e4]'}`} style={{ backgroundColor: question.required ? theme.accentColor : undefined }}>
+                            <div className={`w-[14px] md:w-[18px] h-[14px] md:h-[18px] bg-white rounded-full shadow-sm transition-transform duration-300 ${question.required ? 'translate-x-[16px] md:translate-x-[18px]' : 'translate-x-0'}`}></div>
                         </div>
                     </div>
                 </>
               )}
-              <button className="opacity-60 hover:opacity-100 transition-opacity"><img src="/assets/icons/cms-form/more-vertical.svg" alt="" className="w-6 h-6" /></button>
+              <button className="opacity-60 hover:opacity-100 transition-opacity cursor-pointer border-none bg-transparent"><img src="/assets/icons/cms-form/more-vertical.svg" alt="" className="w-5 h-5 md:w-6 md:h-6" /></button>
               </div>
           )}
         </div>

@@ -1,6 +1,8 @@
 import { db } from '../config/firebase-config.js';
 import { generateId } from '../utils/generateId.js';
 import admin from 'firebase-admin';
+import { sendFormSubmissionNotification } from '../utils/emailService.js';
+import { UserModel } from '../model/userModel.js';
 
 // 1. Create New Form
 export const createForm = async (req, res) => {
@@ -20,6 +22,7 @@ export const createForm = async (req, res) => {
       bannerImage: bannerImage || "",
       questions: questions || [],
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       status: 'active',
       responseCount: 0
     };
@@ -80,7 +83,7 @@ export const getMyForms = async (req, res) => {
       forms.push(doc.data());
     });
 
-    forms.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    forms.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
     res.status(200).json({ status: 'success', data: forms });
   } catch (error) {
@@ -110,6 +113,15 @@ export const submitResponse = async (req, res) => {
     const { formId } = req.params;
     const { answers } = req.body; 
 
+    // Get form data to retrieve form owner's userId
+    const formDoc = await db.collection('forms').doc(formId).get();
+    if (!formDoc.exists) {
+      return res.status(404).json({ status: 'error', message: 'Form not found' });
+    }
+
+    const formData = formDoc.data();
+    const formOwnerId = formData.userId;
+
     const responseData = {
       id: generateId(),
       formId,
@@ -123,8 +135,37 @@ export const submitResponse = async (req, res) => {
       responseCount: admin.firestore.FieldValue.increment(1)
     });
 
+    // Send email notification if enabled in user settings
+    try {
+      const formOwner = await UserModel.getByUid(formOwnerId);
+      
+      if (formOwner) {
+        const userSettings = formOwner.settings || {};
+        const emailNotificationsEnabled = userSettings.notifications?.email ?? true; // Default to true
+        
+        if (emailNotificationsEnabled) {
+          const newResponseCount = (formData.responseCount || 0) + 1;
+          
+          await sendFormSubmissionNotification(
+            formOwner.email,
+            formData.name,
+            formData.title,
+            newResponseCount
+          );
+          
+          console.log(`Email notification sent to ${formOwner.email} for form ${formId}`);
+        } else {
+          console.log(`Email notifications disabled for user ${formOwner.email}`);
+        }
+      }
+    } catch (emailError) {
+      // Log error but don't fail the response submission
+      console.error("Error sending email notification:", emailError);
+    }
+
     res.status(201).json({ status: 'success', message: 'Response submitted' });
   } catch (error) {
+    console.error("Error submitting response:", error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 };

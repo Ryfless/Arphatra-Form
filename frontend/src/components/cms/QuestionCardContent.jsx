@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { getToken } from "@/lib/storage.js";
 
-export default function QuestionCardContent({ question, isActive, isPreview, theme, onUpdate, onChangeResponse }) {
+export default function QuestionCardContent({ question, isActive, isPreview, theme, onUpdate, value, onChangeResponse, onDateClick }) {
   const { 
     type, 
     options = ["Option 1"], 
@@ -12,9 +12,48 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
   } = question;
 
   const [previewValue, setPreviewValue] = useState("");
+  const [otherText, setOtherText] = useState("");
   const [previewChecks, setPreviewChecks] = useState({});
   const [previewRating, setPreviewRating] = useState(0);
   const [previewScale, setPreviewScale] = useState(null);
+
+  // Sync state when value changes (e.g., when navigating back/forth or clearing)
+  useEffect(() => {
+    if (!isPreview) return;
+
+    if (type === 'radio' || type === 'dropdown') {
+      const val = value || "";
+      if (typeof val === 'string' && val.startsWith('Other: ')) {
+        setPreviewValue('other');
+        setOtherText(val.replace('Other: ', ''));
+      } else {
+        setPreviewValue(val);
+        setOtherText("");
+      }
+    } else if (type === 'checkbox') {
+      const checks = {};
+      let other = "";
+      if (Array.isArray(value)) {
+        options.forEach((opt, i) => {
+          if (value.includes(opt)) checks[i] = true;
+        });
+        const otherItem = value.find(v => typeof v === 'string' && v.startsWith('Other: '));
+        if (otherItem) {
+          checks['other'] = true;
+          other = otherItem.replace('Other: ', '');
+        }
+      }
+      setPreviewChecks(checks);
+      setOtherText(other);
+    } else if (type === 'rating') {
+      setPreviewRating(value || 0);
+    } else if (type === 'scale') {
+      setPreviewScale(value || null);
+    } else if (type === 'short_text' || type === 'long_text' || type === 'date') {
+      // These types don't use the above local states for preview, 
+      // they use the value prop directly in their inputs.
+    }
+  }, [value, isPreview, type, options]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [fileError, setFileError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -111,13 +150,8 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
     onChangeResponse && onChangeResponse(question.id, uploadedFiles.map(f => f.name));
   };
 
-  if (type === 'text') {
-    return (
-      <div className="flex flex-col gap-2 w-full animate-fade-in overflow-visible">
-        <input type="text" placeholder="Text Title" value={question.title || ""} onChange={(e) => onUpdate(question.id, { ...question, title: e.target.value })} className="text-[28px] font-bold text-mahogany bg-transparent border-none outline-none w-full placeholder:text-mahogany/30" disabled={isPreview} />
-        <textarea placeholder="Description (Optional)" value={question.description || ""} onChange={(e) => onUpdate(question.id, { ...question, description: e.target.value })} className="text-[18px] font-medium text-mahogany bg-transparent border-none outline-none resize-none w-full h-auto min-h-[40px] placeholder:text-mahogany/30" disabled={isPreview} />
-      </div>
-    );
+  if (type === 'text' || type === 'section') {
+    return null; // Handled by QuestionCard.jsx
   }
 
   if (type === 'image') {
@@ -212,8 +246,8 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
       <div className="w-full pt-2 overflow-visible animate-fade-in">
         {isPreview ? (
             type === 'short_text' 
-                ? <input type="text" placeholder="Your answer" onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} className="w-[60%] border-b-2 border-mahogany/30 py-3 bg-transparent outline-none focus:border-mahogany text-[20px]" />
-                : <textarea placeholder="Your long answer" onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} className="w-full border-b-2 border-mahogany/30 py-3 bg-transparent outline-none focus:border-mahogany text-[20px] min-h-[120px] resize-none" />
+                ? <input type="text" placeholder="Your answer" value={value || ""} onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} className="w-[60%] border-b-2 border-mahogany/30 py-3 bg-transparent outline-none focus:border-mahogany text-[20px]" />
+                : <textarea placeholder="Your long answer" value={value || ""} onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} className="w-full border-b-2 border-mahogany/30 py-3 bg-transparent outline-none focus:border-mahogany text-[20px] min-h-[120px] resize-none" />
         ) : (
             <div className="w-[80%] border-b border-mahogany/20 py-2"><span className="text-[20px] font-medium text-tobacco italic">{type === 'short_text' ? 'Short text answer...' : 'Long text answer...'}</span></div>
         )}
@@ -222,18 +256,148 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
   }
 
   if (type === 'radio' || type === 'checkbox' || type === 'dropdown') {
-    if (isPreview && type === 'dropdown') { return <select onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} className="w-[50%] p-4 rounded-2xl border-2 border-mahogany/20 bg-white/50 text-[20px] outline-none focus:ring-4 focus:ring-mahogany/10 cursor-pointer"><option value="">Select option</option>{options.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}</select>; }
+    if (isPreview && type === 'dropdown') { 
+        return (
+            <div className="flex flex-col gap-4 w-full">
+                <select onChange={(e) => {
+                    const val = e.target.value;
+                    setPreviewValue(val);
+                    onChangeResponse && onChangeResponse(question.id, val === 'other' ? `Other: ${otherText}` : val);
+                }} className="w-[50%] p-4 rounded-2xl border-2 border-mahogany/20 bg-white/50 text-[20px] outline-none focus:ring-4 focus:ring-mahogany/10 cursor-pointer">
+                    <option value="">Select option</option>
+                    {options.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
+                    {question.hasOtherOption && <option value="other">Other...</option>}
+                </select>
+                {(previewValue === 'other' && question.hasOtherOption) && (
+                    <input 
+                        type="text" 
+                        placeholder="Please specify" 
+                        value={otherText}
+                        onChange={(e) => {
+                            setOtherText(e.target.value);
+                            onChangeResponse && onChangeResponse(question.id, `Other: ${e.target.value}`);
+                        }}
+                        className="w-[50%] border-b-2 border-mahogany/30 py-2 bg-transparent outline-none focus:border-mahogany text-[20px] animate-fade-in"
+                    />
+                )}
+            </div>
+        );
+    }
     return (
       <div className="flex flex-col gap-4 w-full pl-2 overflow-visible animate-fade-in">
-        {options.map((opt, idx) => (
-            <div key={idx} className="flex items-center gap-4 group overflow-visible" onClick={() => { if (isPreview) { if (type === 'radio') { setPreviewValue(opt); onChangeResponse && onChangeResponse(question.id, opt); } if (type === 'checkbox') { const newChecks = { ...previewChecks, [idx]: !previewChecks[idx] }; setPreviewChecks(newChecks); const selected = options.filter((_, i) => newChecks[i]); onChangeResponse && onChangeResponse(question.id, selected); } } }}>
-                <div className="shrink-0">{type === 'radio' && <div className={`w-6 h-6 rounded-full border-2 transition-all ${isPreview && previewValue === opt ? 'bg-mahogany border-mahogany shadow-md' : 'border-tobacco/40'}`}></div>}{type === 'checkbox' && <div className={`w-6 h-6 rounded-[6px] border-2 transition-all ${isPreview && previewChecks[idx] ? 'bg-mahogany border-mahogany shadow-md' : 'border-tobacco/40'}`}>{previewChecks[idx] && <div className="w-2 h-2 bg-white rounded-full m-auto mt-1"></div>}</div>}{!isPreview && type === 'dropdown' && <span className="text-[20px] font-medium text-mahogany/60 w-6 block">{idx + 1}.</span>}</div>
-                {isPreview ? <span className={`text-[20px] font-medium transition-colors ${previewValue === opt || previewChecks[idx] ? 'text-mahogany' : 'text-mahogany/70'}`}>{opt}</span> : <input type="text" value={opt} onChange={(e) => handleUpdateOption(idx, e.target.value)} className="text-[20px] font-medium text-mahogany bg-transparent border-b border-transparent focus:border-mahogany/30 outline-none flex-1 py-1" />}
-                {!isPreview && isActive && <button onClick={(e) => { e.stopPropagation(); handleRemoveOption(idx); }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 rounded-full transition-all"><img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-4 h-4 opacity-40" /></button>}
+        {options.map((opt, idx) => {
+            const isSelected = isPreview && (
+                type === 'checkbox' ? (Array.isArray(value) && value.includes(opt) && opt !== "") : (value === opt && opt !== "")
+            );
+            
+            return (
+                <div key={idx} className={`flex items-center gap-4 group overflow-visible ${isPreview ? 'cursor-pointer' : ''}`} onClick={() => { 
+                    if (isPreview) { 
+                        if (type === 'radio') { 
+                            setPreviewValue(opt); 
+                            onChangeResponse && onChangeResponse(question.id, opt); 
+                        } 
+                        if (type === 'checkbox') { 
+                            const currentVal = Array.isArray(value) ? value : [];
+                            let nextVal;
+                            if (currentVal.includes(opt)) {
+                                nextVal = currentVal.filter(v => v !== opt);
+                            } else {
+                                nextVal = [...currentVal, opt];
+                            }
+                            onChangeResponse && onChangeResponse(question.id, nextVal); 
+                        } 
+                    } 
+                }}>
+                    <div className="shrink-0">
+                        {type === 'radio' && <div className={`w-6 h-6 rounded-full border-2 transition-all ${isSelected ? 'bg-mahogany border-mahogany shadow-md' : 'border-tobacco/40'}`}></div>}
+                        {type === 'checkbox' && <div className={`w-6 h-6 rounded-[6px] border-2 transition-all ${isSelected ? 'bg-mahogany border-mahogany shadow-md' : 'border-tobacco/40'}`}>{isSelected && <div className="w-2 h-2 bg-white rounded-full m-auto mt-1.5"></div>}</div>}
+                        {!isPreview && type === 'dropdown' && <span className="text-[20px] font-medium text-mahogany/60 w-6 block">{idx + 1}.</span>}
+                    </div>
+                    {isPreview ? <span className={`text-[20px] font-medium transition-colors ${isSelected ? 'text-mahogany' : 'text-mahogany/70'}`}>{opt || <span className="italic opacity-40">Empty Option</span>}</span> : <input type="text" value={opt} onChange={(e) => handleUpdateOption(idx, e.target.value)} placeholder={`Option ${idx + 1}`} className="text-[20px] font-medium text-mahogany bg-transparent border-b border-transparent focus:border-mahogany/30 outline-none flex-1 py-1" />}
+                    {!isPreview && isActive && <button onClick={(e) => { e.stopPropagation(); handleRemoveOption(idx); }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 rounded-full transition-all cursor-pointer"><img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-4 h-4 opacity-40" /></button>}
+                </div>
+            );
+        })}
+        
+        {/* Render "Other" Option if enabled */}
+        {question.hasOtherOption && (
+            <div className={`flex items-center gap-4 group overflow-visible ${isPreview ? 'cursor-pointer' : ''}`} onClick={() => { 
+                if (isPreview) { 
+                    if (type === 'radio') { 
+                        setPreviewValue('other'); 
+                        onChangeResponse && onChangeResponse(question.id, `Other: ${otherText}`);
+                    } 
+                    if (type === 'checkbox') { 
+                        const newChecks = { ...previewChecks, other: !previewChecks['other'] }; 
+                        setPreviewChecks(newChecks); 
+                        const selected = options.filter((_, i) => newChecks[i]); 
+                        if (newChecks['other']) selected.push(`Other: ${otherText}`); 
+                        onChangeResponse && onChangeResponse(question.id, selected); 
+                    } 
+                } 
+            }}>
+                <div className="shrink-0">
+                    {type === 'radio' && <div className={`w-6 h-6 rounded-full border-2 transition-all ${isPreview && previewValue === 'other' ? 'bg-mahogany border-mahogany shadow-md' : 'border-tobacco/40'}`}></div>}
+                    {type === 'checkbox' && <div className={`w-6 h-6 rounded-[6px] border-2 transition-all ${isPreview && previewChecks['other'] ? 'bg-mahogany border-mahogany shadow-md' : 'border-tobacco/40'}`}>{previewChecks['other'] && <div className="w-2 h-2 bg-white rounded-full m-auto mt-1"></div>}</div>}
+                    {!isPreview && type === 'dropdown' && <span className="text-[20px] font-medium text-mahogany/60 w-6 block">{options.length + 1}.</span>}
+                </div>
+                
+                <div className="flex items-center gap-2 flex-1 border-b border-transparent">
+                    <span className="text-[20px] font-medium text-mahogany">Other:</span>
+                    {isPreview ? (
+                        <input 
+                            type="text" 
+                            placeholder="Your answer"
+                            value={otherText}
+                            disabled={type === 'radio' ? previewValue !== 'other' : !previewChecks['other']}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setOtherText(val);
+                                if (type === 'radio') {
+                                    setPreviewValue('other');
+                                    onChangeResponse && onChangeResponse(question.id, `Other: ${val}`);
+                                } else {
+                                    const selected = options.filter((_, i) => previewChecks[i]);
+                                    if (previewChecks['other']) selected.push(`Other: ${val}`);
+                                    onChangeResponse && onChangeResponse(question.id, selected);
+                                }
+                            }}
+                            className={`text-[20px] font-medium text-mahogany bg-transparent border-b border-mahogany/20 focus:border-mahogany outline-none flex-1 py-1 transition-all ${
+                                (type === 'radio' ? previewValue !== 'other' : !previewChecks['other']) 
+                                ? 'opacity-30 cursor-not-allowed border-transparent' 
+                                : 'opacity-100 cursor-text'
+                            }`}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <span className="text-[20px] font-medium text-tobacco/40 italic">User can type here...</span>
+                    )}
+                </div>
+
+                {!isPreview && isActive && (
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveOther(); }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 rounded-full transition-all cursor-pointer">
+                        <img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-4 h-4 opacity-40" />
+                    </button>
+                )}
             </div>
-        ))}
+        )}
+
         {!isPreview && isActive && (
-            <div className="flex items-center gap-4 mt-2 pl-10 overflow-visible"><button onClick={handleAddOption} className="flex items-center gap-2 text-tobacco hover:text-mahogany transition-colors"><div className="w-5 h-5 flex items-center justify-center rounded-full border border-tobacco/40"><img src="/assets/icons/cms-form/add.svg" alt="" className="w-3 h-3 opacity-60" /></div><span className="text-[18px] font-medium">Add option</span></button>{!question.hasOtherOption && <><div className="h-4 w-px bg-mahogany/20"></div><button onClick={handleAddOther} className="text-[18px] font-medium text-blue-600 hover:text-blue-800 transition-colors">Add "Other"</button></>}</div>
+            <div className="flex items-center gap-4 mt-2 pl-10 overflow-visible">
+                <button onClick={handleAddOption} className="flex items-center gap-2 text-tobacco hover:text-mahogany transition-colors">
+                    <div className="w-5 h-5 flex items-center justify-center rounded-full border border-tobacco/40">
+                        <img src="/assets/icons/cms-form/add.svg" alt="" className="w-3 h-3 opacity-60" />
+                    </div>
+                    <span className="text-[18px] font-medium">Add option</span>
+                </button>
+                {!question.hasOtherOption && (
+                    <>
+                        <div className="h-4 w-px bg-mahogany/20"></div>
+                        <button onClick={handleAddOther} className="text-[18px] font-medium text-blue-600 hover:text-blue-800 transition-colors">Add "Other"</button>
+                    </>
+                )}
+            </div>
         )}
       </div>
     );
@@ -241,25 +405,66 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
 
   if (type === 'date') {
     return (
-      <div className="flex items-center justify-between border-b-2 border-mahogany/20 pb-2 w-[350px] text-tobacco/60 group animate-fade-in mt-2 overflow-visible">
-        {isPreview ? <input type="date" onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} className="bg-transparent border-none outline-none w-full text-mahogany font-medium text-[20px]" /> : <><span className="text-[20px] font-medium italic">Month, day, year</span><img src="/assets/icons/cms-form/type-collection/calendar.svg" alt="" className="w-7 h-7 opacity-50" /></>}
+      <div className={`flex items-center justify-between border-b-2 pb-2 w-full max-w-[350px] transition-all duration-300 mt-2 overflow-visible group/date relative ${isPreview ? 'cursor-pointer focus-within:border-mahogany border-mahogany/20' : 'border-mahogany/10'}`}>
+        {isPreview ? (
+            <>
+                <div className="flex-1 relative h-8">
+                    {/* The real input is hidden visually but stays functional and covers the area */}
+                    <input 
+                        type="date" 
+                        value={value || ""} 
+                        onChange={(e) => onChangeResponse && onChangeResponse(question.id, e.target.value)} 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
+                        onClick={(e) => {
+                            e.preventDefault(); // Prevent native picker
+                            onDateClick && onDateClick(question.id);
+                        }}
+                    />
+                    {/* The visual representation that user sees */}
+                    <div className="absolute inset-0 flex items-center text-mahogany font-medium text-base md:text-[20px] pointer-events-none z-10">
+                        {value ? (
+                            (() => {
+                                const [y, m, d] = value.split('-');
+                                return `${d}/${m}/${y}`;
+                            })()
+                        ) : (
+                            <span className="text-tobacco/40 italic">Select date...</span>
+                        )}
+                    </div>
+                </div>
+                <img 
+                    src="/assets/icons/cms-form/type-collection/calendar.svg" 
+                    alt="Calendar" 
+                    className="w-5 h-5 md:w-7 md:h-7 opacity-40 group-hover/date:opacity-100 group-focus-within/date:opacity-100 transition-opacity cursor-pointer active:scale-90 z-30"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDateClick && onDateClick(question.id);
+                    }}
+                />
+            </>
+        ) : (
+            <>
+                <span className="text-base md:text-[20px] font-medium italic text-tobacco/60">Month, day, year</span>
+                <img src="/assets/icons/cms-form/type-collection/calendar.svg" alt="" className="w-5 h-5 md:w-7 md:h-7 opacity-50" />
+            </>
+        )}
       </div>
     );
   }
 
   if (type === 'scale') {
     return (
-      <div className="flex flex-col gap-8 w-full py-2 animate-fade-in overflow-visible">
+      <div className="flex flex-col gap-4 md:gap-8 w-full py-2 animate-fade-in overflow-visible">
          {isPreview ? (
-            <div className="flex items-center gap-8 justify-center py-6 bg-white/20 rounded-[40px] px-10">
-                <span className="text-[20px] font-bold text-mahogany shrink-0">{scaleConfig.minLabel}</span>
-                <div className="flex gap-8">{Array.from({ length: scaleConfig.max - scaleConfig.min + 1 }).map((_, i) => { const val = scaleConfig.min + i; return (<div key={i} onClick={() => { setPreviewScale(val); onChangeResponse && onChangeResponse(question.id, val); }} className="flex flex-col items-center gap-3 cursor-pointer group/num"><span className={`text-[16px] font-bold transition-colors ${previewScale === val ? 'text-mahogany' : 'text-tobacco'}`}>{val}</span><div className={`w-10 h-10 rounded-full border-2 transition-all ${previewScale === val ? 'bg-mahogany border-mahogany shadow-lg scale-110' : 'border-mahogany/30 group-hover/num:border-mahogany'}`}></div></div>); })}</div>
-                <span className="text-[20px] font-bold text-mahogany shrink-0">{scaleConfig.maxLabel}</span>
+            <div className="flex items-center gap-4 md:gap-8 justify-center py-4 md:py-6 bg-white/20 rounded-[25px] md:rounded-[40px] px-4 md:px-10 overflow-x-auto custom-scrollbar">
+                <span className="text-sm md:text-[20px] font-bold text-mahogany shrink-0">{scaleConfig.minLabel}</span>
+                <div className="flex gap-3 md:gap-8">{Array.from({ length: scaleConfig.max - scaleConfig.min + 1 }).map((_, i) => { const val = scaleConfig.min + i; return (<div key={i} onClick={() => { setPreviewScale(val); onChangeResponse && onChangeResponse(question.id, val); }} className="flex flex-col items-center gap-2 md:gap-3 cursor-pointer group/num"><span className={`text-[12px] md:text-[16px] font-bold transition-colors ${previewScale === val ? 'text-mahogany' : 'text-tobacco'}`}>{val}</span><div className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 transition-all ${previewScale === val ? 'bg-mahogany border-mahogany shadow-lg scale-110' : 'border-mahogany/30 group-hover/num:border-mahogany'}`}></div></div>); })}</div>
+                <span className="text-sm md:text-[20px] font-bold text-mahogany shrink-0">{scaleConfig.maxLabel}</span>
             </div>
          ) : (
             <div className="flex flex-col gap-4 overflow-visible">
-                {isActive && (<div className="flex items-center gap-4 text-[20px] font-medium text-mahogany mb-4"><select value={scaleConfig.min} onChange={(e) => onUpdate(question.id, { ...question, scaleConfig: { ...scaleConfig, min: parseInt(e.target.value) } })} className="bg-vanilla px-3 py-1 rounded-lg border-none outline-none"><option value="0">0</option><option value="1">1</option></select><span className="text-tobacco font-bold italic">until</span><select value={scaleConfig.max} onChange={(e) => onUpdate(question.id, { ...question, scaleConfig: { ...scaleConfig, max: parseInt(e.target.value) } })} className="bg-vanilla px-3 py-1 rounded-lg border-none outline-none">{[2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}</select></div>)}
-                {[scaleConfig.min, scaleConfig.max].map((val, idx) => (<div key={idx} className="flex items-center gap-6"><span className="text-[20px] font-bold text-mahogany w-6">{val}</span><input type="text" placeholder="Label (Optional)" value={idx === 0 ? scaleConfig.minLabel : scaleConfig.maxLabel} onChange={(e) => onUpdate(question.id, { ...question, scaleConfig: { ...scaleConfig, [idx === 0 ? 'minLabel' : 'maxLabel']: e.target.value } })} className="text-[20px] font-medium text-mahogany bg-transparent border-b border-mahogany/20 focus:border-mahogany outline-none flex-1" /></div>))}
+                {isActive && (<div className="flex items-center gap-4 text-base md:text-[20px] font-medium text-mahogany mb-2 md:mb-4"><select value={scaleConfig.min} onChange={(e) => onUpdate(question.id, { ...question, scaleConfig: { ...scaleConfig, min: parseInt(e.target.value) } })} className="bg-vanilla px-2 md:px-3 py-1 rounded-lg border-none outline-none"><option value="0">0</option><option value="1">1</option></select><span className="text-tobacco font-bold italic text-sm md:text-base">until</span><select value={scaleConfig.max} onChange={(e) => onUpdate(question.id, { ...question, scaleConfig: { ...scaleConfig, max: parseInt(e.target.value) } })} className="bg-vanilla px-2 md:px-3 py-1 rounded-lg border-none outline-none">{[2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}</select></div>)}
+                {[scaleConfig.min, scaleConfig.max].map((val, idx) => (<div key={idx} className="flex items-center gap-4 md:gap-6"><span className="text-base md:text-[20px] font-bold text-mahogany w-4 md:w-6">{val}</span><input type="text" placeholder="Label (Optional)" value={idx === 0 ? scaleConfig.minLabel : scaleConfig.maxLabel} onChange={(e) => onUpdate(question.id, { ...question, scaleConfig: { ...scaleConfig, [idx === 0 ? 'minLabel' : 'maxLabel']: e.target.value } })} className="text-base md:text-[20px] font-medium text-mahogany bg-transparent border-b border-mahogany/20 focus:border-mahogany outline-none flex-1" /></div>))}
             </div>
          )}
       </div>
@@ -272,17 +477,17 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
         {isPreview ? (
             <div className="flex flex-col gap-4 overflow-visible">
                 <input type="file" ref={fileRef} multiple className="hidden" onChange={handleFileChange} />
-                <div onClick={() => fileRef.current.click()} className={`w-[60%] border-4 border-dashed rounded-[40px] p-12 flex flex-col items-center gap-4 transition-all group/file ${fileError ? 'border-red-300 bg-red-50' : 'border-mahogany/20 bg-white/10 hover:bg-white/30 cursor-pointer'}`}>
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center group-hover/file:scale-110 transition-transform ${fileError ? 'bg-red-100' : 'bg-mahogany/5'}`}><img src="/assets/icons/cms-form/type-collection/upload.svg" alt="" className={`w-10 h-10 ${fileError ? 'opacity-100' : 'opacity-40'}`} /></div>
-                    <div className="flex flex-col items-center gap-1 text-center"><span className={`text-[22px] font-bold ${fileError ? 'text-red-600' : 'text-mahogany'}`}>{selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'Add file'}</span><span className="text-[16px] text-tobacco">{fileError ? fileError : `Maximum file size: ${fileConfig.maxSize}`}</span></div>
+                <div onClick={() => fileRef.current.click()} className={`w-full md:w-[60%] border-4 border-dashed rounded-[30px] md:rounded-[40px] p-8 md:p-12 flex flex-col items-center gap-4 transition-all group/file ${fileError ? 'border-red-300 bg-red-50' : 'border-mahogany/20 bg-white/10 hover:bg-white/30 cursor-pointer'}`}>
+                    <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center group-hover/file:scale-110 transition-transform ${fileError ? 'bg-red-100' : 'bg-mahogany/5'}`}><img src="/assets/icons/cms-form/type-collection/upload.svg" alt="" className={`w-8 h-8 md:w-10 md:h-10 ${fileError ? 'opacity-100' : 'opacity-40'}`} /></div>
+                    <div className="flex flex-col items-center gap-1 text-center"><span className={`text-lg md:text-[22px] font-bold ${fileError ? 'text-red-600' : 'text-mahogany'}`}>{selectedFiles.length > 0 ? `${selectedFiles.length} file(s)` : 'Add file'}</span><span className="text-xs md:text-[16px] text-tobacco">{fileError ? fileError : `Max size: ${fileConfig.maxSize}`}</span></div>
                 </div>
-                {selectedFiles.length > 0 && (<div className="flex flex-col gap-2 w-[60%] animate-fade-in">{selectedFiles.map((f, i) => (<div key={i} className="flex items-center justify-between bg-white/40 p-3 rounded-xl border border-mahogany/10 transition-all"><div className="flex items-center gap-3"><div className="w-8 h-8 bg-mahogany/10 rounded-lg flex items-center justify-center text-[10px] font-bold text-mahogany uppercase">{f.name.split('.').pop()}</div><span className="text-[14px] font-medium text-mahogany truncate max-w-[200px]">{f.name}</span></div><button onClick={() => setSelectedFiles(selectedFiles.filter((_, idx) => idx !== i))} className="p-1 hover:bg-red-50 rounded-md"><img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-4 h-4 opacity-40" /></button></div>))}</div>)}
+                {selectedFiles.length > 0 && (<div className="flex flex-col gap-2 w-full md:w-[60%] animate-fade-in">{selectedFiles.map((f, i) => (<div key={i} className="flex items-center justify-between bg-white/40 p-2 md:p-3 rounded-xl border border-mahogany/10 transition-all"><div className="flex items-center gap-2 md:gap-3"><div className="w-6 h-6 md:w-8 md:h-8 bg-mahogany/10 rounded-lg flex items-center justify-center text-[8px] md:text-[10px] font-bold text-mahogany uppercase">{f.name.split('.').pop()}</div><span className="text-xs md:text-[14px] font-medium text-mahogany truncate max-w-[150px] md:max-w-[200px]">{f.name}</span></div><button onClick={() => setSelectedFiles(selectedFiles.filter((_, idx) => idx !== i))} className="p-1 hover:bg-red-50 rounded-md"><img src="/assets/icons/cms-form/close-icon.svg" alt="" className="w-3 h-3 md:w-4 md:h-4 opacity-40" /></button></div>))}</div>)}
             </div>
         ) : (
-            <div className="flex flex-col gap-6 w-full overflow-visible">
-                <div className="flex items-center justify-between w-[60%] overflow-visible"><span className="text-[20px] font-medium text-mahogany">Allow only certain file types</span><div onClick={() => handleUpdateFileConfig({ allowSpecific: !fileConfig.allowSpecific })} className={`w-[44px] h-[26px] rounded-[5px] flex items-center px-1 cursor-pointer transition-colors ${fileConfig.allowSpecific ? 'bg-mahogany' : 'bg-[#e4e4e4]'}`}><div className={`w-[18px] h-[18px] bg-white rounded-full shadow-sm transition-transform duration-300 ${fileConfig.allowSpecific ? 'translate-x-[18px]' : 'translate-x-0'}`}></div></div></div>
-                {fileConfig.allowSpecific && (<div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8 w-[80%] overflow-visible">{Object.entries(fileConfig.types).map(([key, val]) => (<div key={key} onClick={() => toggleFileType(key)} className="flex items-center gap-3 cursor-pointer group/type"><div className={`w-6 h-6 rounded-[6px] border-2 flex items-center justify-center transition-all ${val ? 'bg-mahogany border-mahogany' : 'border-tobacco/40 bg-white/50'}`}>{val && <div className="w-2 h-2 bg-white rounded-full"></div>}</div><span className={`text-[18px] font-medium capitalize ${val ? 'text-mahogany' : 'text-tobacco'}`}>{key}</span></div>))}</div>)}
-                <div className="flex flex-col gap-4 mt-2 overflow-visible"><div className="flex items-center justify-between w-[60%]"><span className="text-[18px] font-medium text-mahogany">Maximum number of files</span><select value={fileConfig.maxCount} onChange={(e) => handleUpdateFileConfig({ maxCount: e.target.value })} className="bg-vanilla px-4 py-1 rounded-lg border-none outline-none font-bold"><option value="1">1</option><option value="5">5</option><option value="10">10</option></select></div><div className="flex items-center justify-between w-[60%]"><span className="text-[18px] font-medium text-mahogany">Maximum file size</span><select value={fileConfig.maxSize} onChange={(e) => handleUpdateFileConfig({ maxSize: e.target.value })} className="bg-vanilla px-4 py-1 rounded-lg border-none outline-none font-bold"><option value="1MB">1 MB</option><option value="10MB">10 MB</option><option value="100MB">100 MB</option><option value="1GB">1 GB</option></select></div></div>
+            <div className="flex flex-col gap-4 md:gap-6 w-full overflow-visible">
+                <div className="flex items-center justify-between w-full md:w-[60%] overflow-visible"><span className="text-base md:text-[20px] font-medium text-mahogany">Specific file types</span><div onClick={() => handleUpdateFileConfig({ allowSpecific: !fileConfig.allowSpecific })} className={`w-[44px] h-[26px] rounded-[5px] flex items-center px-1 cursor-pointer transition-colors ${fileConfig.allowSpecific ? 'bg-mahogany' : 'bg-[#e4e4e4]'}`}><div className={`w-[18px] h-[18px] bg-white rounded-full shadow-sm transition-transform duration-300 ${fileConfig.allowSpecific ? 'translate-x-[18px]' : 'translate-x-0'}`}></div></div></div>
+                {fileConfig.allowSpecific && (<div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4 md:gap-x-8 w-full md:w-[80%] overflow-visible">{Object.entries(fileConfig.types).map(([key, val]) => (<div key={key} onClick={() => toggleFileType(key)} className="flex items-center gap-2 md:gap-3 cursor-pointer group/type"><div className={`w-5 h-5 md:w-6 md:h-6 rounded-[6px] border-2 flex items-center justify-center transition-all ${val ? 'bg-mahogany border-mahogany' : 'border-tobacco/40 bg-white/50'}`}>{val && <div className="w-2 h-2 bg-white rounded-full"></div>}</div><span className={`text-sm md:text-[18px] font-medium capitalize ${val ? 'text-mahogany' : 'text-tobacco'}`}>{key}</span></div>))}</div>)}
+                <div className="flex flex-col gap-3 md:gap-4 mt-2 overflow-visible"><div className="flex items-center justify-between w-full md:w-[60%]"><span className="text-sm md:text-[18px] font-medium text-mahogany">Max number of files</span><select value={fileConfig.maxCount} onChange={(e) => handleUpdateFileConfig({ maxCount: e.target.value })} className="bg-vanilla px-2 md:px-4 py-1 rounded-lg border-none outline-none font-bold text-sm md:text-base"><option value="1">1</option><option value="5">5</option><option value="10">10</option></select></div><div className="flex items-center justify-between w-full md:w-[60%]"><span className="text-sm md:text-[18px] font-medium text-mahogany">Max file size</span><select value={fileConfig.maxSize} onChange={(e) => handleUpdateFileConfig({ maxSize: e.target.value })} className="bg-vanilla px-2 md:px-4 py-1 rounded-lg border-none outline-none font-bold text-sm md:text-base"><option value="1MB">1 MB</option><option value="10MB">10 MB</option><option value="100MB">100 MB</option><option value="1GB">1 GB</option></select></div></div>
             </div>
         )}
       </div>
@@ -304,28 +509,6 @@ export default function QuestionCardContent({ question, isActive, isPreview, the
                 );
             })}
          </div>
-      </div>
-    );
-  }
-
-  if (type === 'section') {
-    return (
-      <div className="flex flex-col gap-2 w-full animate-fade-in overflow-visible">
-        <input 
-            type="text" 
-            placeholder="Section Title" 
-            value={question.title || ""} 
-            onChange={(e) => onUpdate(question.id, { ...question, title: e.target.value })} 
-            className="text-[32px] font-bold text-mahogany bg-transparent border-none outline-none w-full placeholder:text-mahogany/30" 
-            disabled={isPreview} 
-        />
-        <textarea 
-            placeholder="Description (Optional)" 
-            value={question.description || ""} 
-            onChange={(e) => onUpdate(question.id, { ...question, description: e.target.value })} 
-            className="text-[18px] font-medium text-mahogany bg-transparent border-none outline-none resize-none w-full h-auto min-h-[40px] placeholder:text-mahogany/30" 
-            disabled={isPreview} 
-        />
       </div>
     );
   }

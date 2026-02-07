@@ -5,6 +5,7 @@ import Popup from "@/components/Popup.jsx";
 import Toast from "@/components/Toast.jsx";
 import { PASSWORD_MIN_LENGTH } from "@/lib/config.js";
 import { auth } from "@/lib/firebase.js";
+import { useLanguage } from "@/lib/i18n.jsx";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -19,6 +20,7 @@ function getPasswordStrength(password) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,10 +39,10 @@ export default function RegisterPage() {
 
   const strengthStyles = useMemo(() => {
     if (!password) return { width: "0%", color: "", text: "" };
-    if (strength <= 1) return { width: "33%", color: "var(--color-weak)", text: "Weak password" };
-    if (strength <= 3) return { width: "66%", color: "var(--color-medium)", text: "Medium password" };
-    return { width: "100%", color: "var(--color-strong)", text: "Strong password" };
-  }, [password, strength]);
+    if (strength <= 1) return { width: "33%", color: "var(--color-weak)", text: t("weak_password") };
+    if (strength <= 3) return { width: "66%", color: "var(--color-medium)", text: t("medium_password") };
+    return { width: "100%", color: "var(--color-strong)", text: t("strong_password") };
+  }, [password, strength, t]);
 
   const showToast = (message, type = "success") => {
     setToast({ open: true, message, type });
@@ -57,9 +59,9 @@ export default function RegisterPage() {
   };
 
   const validateForm = () => {
-    if (fullName.trim().length < 3) return "Nama minimal 3 karakter";
-    if (!EMAIL_REGEX.test(email)) return "Email tidak valid";
-    if (password.length < PASSWORD_MIN_LENGTH) return "Password minimal 8 karakter";
+    if (fullName.trim().length < 3) return t("name_min_3");
+    if (!EMAIL_REGEX.test(email)) return t("email_not_valid");
+    if (password.length < PASSWORD_MIN_LENGTH) return t("password_min_8");
     
     // Strict Password Validation
     const hasUpper = /[A-Z]/.test(password);
@@ -67,10 +69,10 @@ export default function RegisterPage() {
     const hasSymbol = /[^A-Za-z0-9]/.test(password);
     
     if (!hasUpper || !hasNumber || !hasSymbol) {
-      return "Password harus mengandung huruf kapital, angka, dan simbol.";
+      return t("password_must_contain");
     }
 
-    if (password !== confirm) return "Password dan konfirmasi tidak sama";
+    if (password !== confirm) return t("password_not_match");
     return null;
   };
 
@@ -96,13 +98,13 @@ export default function RegisterPage() {
       setSubmitting(false);
 
       if (data.success) {
-        showPopup("Account created successfully! You can now sign in.", "success");
+        showPopup(t("account_created"), "success");
       } else {
-        showToast(data.message || "Registration failed", "error");
+        showToast(data.message || t("registration_failed"), "error");
       }
     } catch (err) {
       setSubmitting(false);
-      showToast("An error occurred. Please try again.", "error");
+      showToast(t("error_occurred"), "error");
     }
   };
 
@@ -122,15 +124,15 @@ export default function RegisterPage() {
         </div>
 
         <div className="flex-1 flex flex-col justify-center md:pl-12 animate-reveal-form w-full max-w-md md:max-w-none">
-          <h1 className="text-[32px] sm:text-[38px] md:text-[44px] font-bold mb-2 text-mahogany text-center md:text-left">Create an Account</h1>
+          <h1 className="text-[32px] sm:text-[38px] md:text-[44px] font-bold mb-2 text-mahogany text-center md:text-left">{t("create_account")}</h1>
           <p className="text-[16px] md:text-[18px] mb-6 text-mahogany opacity-90 text-center md:text-left">
-            Join us today and start your journey with a new account.
+            {t("register_subtitle")}
           </p>
 
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <input
               type="text"
-              placeholder="Full Name"
+              placeholder={t("full_name")}
               aria-label="Full Name"
               autoFocus
               className="w-full rounded-full px-5 py-3 border-2 border-mahogany bg-rice outline-none focus:ring-0 disabled:opacity-60"
@@ -142,7 +144,7 @@ export default function RegisterPage() {
 
             <input
               type="email"
-              placeholder="Email address"
+              placeholder={t("email_address")}
               aria-label="Email address"
               className="w-full rounded-full px-5 py-3 border-2 border-mahogany bg-rice outline-none focus:ring-0 disabled:opacity-60"
               value={email}
@@ -155,7 +157,7 @@ export default function RegisterPage() {
               <div className="relative flex items-center w-full rounded-full border-2 border-mahogany bg-rice px-5 py-3">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Password"
+                  placeholder={t("password")}
                   aria-label="Password"
                   className="w-full bg-transparent outline-none pr-10 focus:ring-0 disabled:opacity-60"
                   value={password}
@@ -173,7 +175,7 @@ export default function RegisterPage() {
                   <img src={showPassword ? "/assets/icons/login/eye-open.svg" : "/assets/icons/login/eye-closed.svg"} alt="" className="w-5 h-5 pointer-events-none" />
                 </button>
               </div>
-              <p className="text-sm mt-1 text-mahogany opacity-70">Min. 8 characters, capital letters, numbers & symbols.</p>
+              <p className="text-sm mt-1 text-mahogany opacity-70">{t("password_hint")}</p>
               <div className="mt-2">
                 <div className="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
                   <div className="h-full transition-all duration-300" style={{ width: strengthStyles.width, backgroundColor: strengthStyles.color }} />
@@ -185,7 +187,7 @@ export default function RegisterPage() {
             <div className="relative flex items-center w-full rounded-full border-2 border-mahogany bg-rice px-5 py-3">
               <input
                 type={showConfirm ? "text" : "password"}
-                placeholder="Confirm Password"
+                placeholder={t("confirm_password")}
                 aria-label="Confirm Password"
                 className="w-full bg-transparent outline-none pr-10 focus:ring-0 disabled:opacity-60"
                 value={confirm}
@@ -209,13 +211,13 @@ export default function RegisterPage() {
               className="rounded-full text-lg font-semibold py-3 mt-4 transition-all bg-mahogany text-vanilla hover:shadow-btn-hover disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               disabled={submitting}
             >
-              {submitting ? "Mendaftarkan..." : "Sign Up"}
+              {submitting ? t("registering") : t("sign_up")}
             </button>
           </form>
 
           <p className="text-center mt-6 text-mahogany">
-            Already have an account?{" "}
-            <Link to="/login" className="font-bold underline">Login</Link>
+            {t("have_account")}{" "}
+            <Link to="/login" className="font-bold underline">{t("login")}</Link>
           </p>
         </div>
       </div>

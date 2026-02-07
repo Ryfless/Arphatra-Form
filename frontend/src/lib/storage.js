@@ -14,6 +14,7 @@ export function clearToken() {
 
 export function saveUser(userData) {
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+  window.dispatchEvent(new CustomEvent("user-profile-updated", { detail: userData }));
 }
 
 export function getUser() {
