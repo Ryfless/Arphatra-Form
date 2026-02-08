@@ -121,4 +121,4 @@ arphatra-pweb/
 *   **Fika**   -
 *   **Hurul**  -
 
-Licensed under [MIT License](LICENSE).
+Licensed under [MIT License](LICENSE.txt).
