@@ -116,6 +116,9 @@ arphatra-pweb/
 
 ## 👥 Authors
 
-*   **Farras** - *Lead Developer*
+*   **Arrazi** -
+*   **Farras** -
+*   **Fika**   -
+*   **Hurul**  -
 
 Licensed under [MIT License](LICENSE).
