@@ -50,7 +50,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ 
     success: false, 
     message: "Internal Server Error", 
-    error: config.nodeEnv === "development" ? err.message : undefined 
+    error: err.message // Tampilkan error message untuk debug
   });
 });
 

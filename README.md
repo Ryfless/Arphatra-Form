@@ -15,6 +15,7 @@
 *   **Rich Content Support:** Dukungan untuk Gambar, Video (YouTube/Vimeo), dan format teks kaya.
 *   **Real-time Analytics:** Dashboard visual (Pie Chart, Histogram) untuk menganalisis jawaban secara instan.
 *   **Secure & Fast:** Terintegrasi dengan Firebase Authentication & Firestore untuk keamanan data tingkat tinggi.
+*   **Automatic Thumbnail Generation:** Preview visual form otomatis dibuat saat disimpan untuk tampilan Dashboard yang lebih informatif.
 *   **Multi-Page Forms:** Dukungan otomatis untuk pemisahan halaman (Section) dan logika navigasi.
 *   **Export Data:** Ekspor hasil tanggapan ke format Spreadsheet untuk analisis lebih lanjut.
 

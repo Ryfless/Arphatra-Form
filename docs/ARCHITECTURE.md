@@ -68,6 +68,12 @@ User dapat menentukan URL kustom untuk form mereka (misal: `arphatra.web.app/f/l
 *   **Backend:** `getFormById` melakukan lookup ganda (mencoba mencari `id` (UUID) lalu `slug`).
 *   **Frontend:** Menampilkan indikator ketersediaan slug secara real-time melalui endpoint `/forms/check-slug`.
 
+### Automatic Thumbnails
+Saat form disimpan, frontend menggunakan library `html-to-image` untuk menangkap screenshot area editor. Gambar ini kemudian diunggah ke Firebase Storage dan URL-nya disimpan di field `thumbnail`. Dashboard menggunakan URL ini untuk menampilkan preview visual form di tampilan Grid.
+
+### Robust File Uploads (Busboy)
+Untuk mengatasi batasan stream parsing di Firebase Cloud Functions (v2), backend menggunakan `busboy` secara manual sebagai pengganti `multer`. Ini memungkinkan pemrosesan file multipart/form-data yang lebih stabil di lingkungan serverless.
+
 ### Multi-language (i18n)
 Mendukung Bahasa Inggris dan Bahasa Indonesia melalui `LanguageProvider`. Pilihan bahasa disimpan di Firestore dalam pengaturan profil user dan disinkronkan saat login.
 

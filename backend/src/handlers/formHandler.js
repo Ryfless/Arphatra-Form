@@ -7,7 +7,7 @@ import { UserModel } from '../model/userModel.js';
 // 1. Create New Form
 export const createForm = async (req, res) => {
   try {
-    const { name, title, description, theme, questions, bannerImage, slug } = req.body;
+    const { name, title, description, theme, questions, bannerImage, slug, thumbnail } = req.body;
     const userId = req.user.uid; 
 
     console.log(`Creating form for user: ${userId}, name: ${name}`);
@@ -29,6 +29,7 @@ export const createForm = async (req, res) => {
       slug: slug || null,
       theme: theme || {},
       bannerImage: bannerImage || "",
+      thumbnail: thumbnail || "", // Save thumbnail URL
       questions: questions || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -53,7 +54,7 @@ export const createForm = async (req, res) => {
 export const updateForm = async (req, res) => {
   try {
     const { formId } = req.params;
-    const { name, title, description, theme, questions, bannerImage, slug } = req.body;
+    const { name, title, description, theme, questions, bannerImage, slug, thumbnail } = req.body; // Added thumbnail
     const userId = req.user.uid;
 
     console.log(`Updating form ${formId} for user: ${userId}`);
@@ -84,7 +85,9 @@ export const updateForm = async (req, res) => {
     }
 
     await formRef.update({
-      name, title, description, theme, questions, bannerImage, slug: slug || null,
+      name, title, description, theme, questions, bannerImage, 
+      slug: slug || null,
+      thumbnail: thumbnail || currentData.thumbnail || "", // Update thumbnail URL
       updatedAt: new Date().toISOString()
     });
 

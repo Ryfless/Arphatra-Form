@@ -24,7 +24,7 @@ export default function LandingPage() {
         <div className="flex flex-col gap-4 animate-fade-in max-w-[1400px] w-full">
           <h1 className="text-[40px] md:text-[84px] font-bold tracking-tight text-mahogany leading-[1.05]">
             {t("hero_title_1")} <br />
-            <span className="text-sand">{t("hero_title_2")}</span> {t("hero_title_3")}
+            <span className="underline decoration-sand underline-offset-8">{t("hero_title_2")}</span> {t("hero_title_3")}
           </h1>
           <p className="text-[18px] md:text-[24px] text-tobacco max-w-3xl mx-auto font-medium opacity-90">
             {t("hero_subtitle")}
@@ -44,8 +44,8 @@ export default function LandingPage() {
       <section className="px-6 md:px-16 py-20 md:py-32 bg-vanilla/30">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="flex flex-col gap-4 text-center md:text-left">
-            <div className="w-16 h-16 bg-mahogany rounded-2xl flex items-center justify-center shadow-lg mb-2 mx-auto md:mx-0">
-              <img src="/assets/icons/homepage/doc-icon.svg" alt="" className="w-8 h-8 invert" />
+            <div className="w-16 h-16 bg-mahogany/10 rounded-2xl flex items-center justify-center shadow-lg mb-2 mx-auto md:mx-0">
+              <img src="/assets/icons/homepage/doc-icon.svg" alt="" className="w-8 h-8" />
             </div>
             <h3 className="text-2xl font-bold">{t("feature_1_title")}</h3>
             <p className="text-tobacco font-medium leading-relaxed">

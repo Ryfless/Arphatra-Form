@@ -31,6 +31,7 @@ const translations = {
     "my_profile": "My Profile",
     "settings": "Settings",
     "logout": "Logout",
+    "all": "All",
     "today": "Today",
     "yesterday": "Yesterday",
     "2days": "2 Days ago",
@@ -40,6 +41,9 @@ const translations = {
     "delete_form_confirm": "Are you sure you want to delete this form? All responses will be permanently removed. This action cannot be undone.",
     "form_deleted": "Form deleted successfully",
     "form_delete_failed": "Failed to delete form",
+    "empty_today": "It's so quiet today... You haven't touched any forms yet. Let's start one!",
+    "empty_yesterday": "Did you take a break yesterday? No form traces found.",
+    "empty_2days": "Two days ago was empty. Time to fill the void?",
     
     // Login Page
     "welcome_back": "Welcome Back!",
@@ -243,6 +247,7 @@ const translations = {
     "my_profile": "Profil Saya",
     "settings": "Pengaturan",
     "logout": "Keluar",
+    "all": "Semua",
     "today": "Hari Ini",
     "yesterday": "Kemarin",
     "2days": "2 Hari Lalu",
@@ -252,6 +257,9 @@ const translations = {
     "delete_form_confirm": "Apakah Anda yakin ingin menghapus form ini? Semua respons akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.",
     "form_deleted": "Form berhasil dihapus",
     "form_delete_failed": "Gagal menghapus form",
+    "empty_today": "Hening sekali hari ini... Belum ada form yang kamu sentuh. Yuk, mulai satu!",
+    "empty_yesterday": "Kemarin sepertinya kamu beristirahat ya? Tidak ada jejak form ditemukan.",
+    "empty_2days": "Dua hari lalu masih kosong melompong. Waktunya mengisi kekosongan ini?",
     
     // Login Page
     "welcome_back": "Selamat Datang Kembali!",

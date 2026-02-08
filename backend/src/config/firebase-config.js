@@ -48,16 +48,15 @@ const auth = admin.auth();
 // Safe Bucket Initialization
 let bucket;
 try {
-    // Jika config.storageBucket kosong, ini akan melempar error yang kita tangkap
-    bucket = admin.storage().bucket(config.storageBucket);
-    console.log(`✅ Storage Bucket Initialized: ${config.storageBucket || 'Default'}`);
+    const bucketName = config.storageBucket || `${config.firebaseProjectId}.appspot.com`; 
+    bucket = admin.storage().bucket(bucketName);
+    console.log(`✅ Storage Bucket Initialized: ${bucketName}`);
 } catch (e) {
-    console.warn("⚠️ Storage Bucket Failed to Initialize:", e.message);
+    console.error("❌ CRTICAL: Storage Bucket Failed to Initialize:", e.message);
+    // Jangan biarkan app crash di awal, tapi pastikan error jelas saat upload
     bucket = { 
-        file: () => ({ 
-            createWriteStream: () => { throw new Error("Storage not configured or invalid bucket name"); },
-            makePublic: async () => {}
-        }) 
+        file: () => { throw new Error("Storage bucket configuration is invalid or failed to initialize."); },
+        name: 'invalid-bucket'
     };
 }
 

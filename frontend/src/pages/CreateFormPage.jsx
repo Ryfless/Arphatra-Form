@@ -10,6 +10,7 @@ import ImageCropModal from "@/components/ImageCropModal.jsx";
 import DatePickerModal from "@/components/DatePickerModal.jsx";
 import { apiRequest } from "@/lib/api.js";
 import { getToken } from "@/lib/storage.js";
+import { toJpeg } from "html-to-image";
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -47,7 +48,7 @@ export default function CreateFormPage() {
   const lastSwapTime = useRef(0);
 
   const [theme, setTheme] = useState({ backgroundColor: "var(--color-mountain)", cardColor: "var(--color-rice)", accentColor: "var(--color-mahogany)", bannerImage: "/assets/images/default-banner.png" });
-  const [formData, setFormData] = useState({ name: "", title: "", description: "", bannerImage: "/assets/images/default-banner.png" });
+  const [formData, setFormData] = useState({ name: "", title: "", description: "", bannerImage: "/assets/images/default-banner.png", thumbnail: "" });
   const [questions, setQuestions] = useState([]);
   
   const [activeQuestionId, setActiveQuestionId] = useState('header');
@@ -138,7 +139,13 @@ export default function CreateFormPage() {
             try {
                 const response = await apiRequest(`/forms/${formId}`);
                 const data = response.data;
-                setFormData({ name: data.name || "Form 1", title: data.title, description: data.description, bannerImage: data.bannerImage });
+                setFormData({ 
+                    name: data.name || "Form 1", 
+                    title: data.title, 
+                    description: data.description, 
+                    bannerImage: data.bannerImage,
+                    thumbnail: data.thumbnail || "" 
+                });
                 setTheme(data.theme);
                 setQuestions(data.questions);
                 setSlug(data.slug || "");
@@ -154,6 +161,49 @@ export default function CreateFormPage() {
     isCurrentlySaving.current = true;
     setIsSaving(true);
     try {
+        // 1. Capture Thumbnail (Only if we have content)
+        let thumbnailUrl = null;
+        if (scrollContainerRef.current) {
+            try {
+                // toJpeg is often more stable for complex DOMs
+                const dataUrl = await toJpeg(scrollContainerRef.current, {
+                    quality: 0.5,
+                    cacheBust: true,
+                    height: 600,
+                    skipFonts: true,
+                    pixelRatio: 1, // Optimization
+                    style: {
+                        overflow: 'visible',
+                        padding: '20px'
+                    },
+                    // Filter out UI elements that might cause errors
+                    filter: (node) => {
+                        const exclusionClasses = ['AddOptionPanel', 'form-menu-container', 'Add-question-btn'];
+                        if (node.tagName === 'BUTTON') return false;
+                        
+                        const className = (typeof node.className === 'string') ? node.className : '';
+                        if (exclusionClasses.some(ex => className.includes(ex))) return false;
+                        
+                        return true;
+                    }
+                });
+                
+                if (dataUrl) {
+                    // Convert DataURL to Blob
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+                    const thumbFile = new File([blob], "thumbnail.jpg", { type: "image/jpeg" });
+                    const uploadedUrl = await handleFileUpload(thumbFile);
+                    if (uploadedUrl) {
+                        thumbnailUrl = uploadedUrl;
+                        setFormData(prev => ({ ...prev, thumbnail: uploadedUrl }));
+                    }
+                }
+            } catch (err) {
+                console.warn("Thumbnail generation failed:", err);
+            }
+        }
+
         const body = { 
             name: formData.name, 
             title: formData.title, 
@@ -161,8 +211,10 @@ export default function CreateFormPage() {
             theme, 
             questions, 
             bannerImage: theme.bannerImage,
-            slug: slug || null 
+            slug: slug || null,
+            thumbnail: thumbnailUrl // Gunakan nama variabel yang benar
         };
+
         if (currentId) { 
             await apiRequest(`/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); 
             setGeneratedLink(slug ? `${window.location.origin.replace('/cms', '')}/f/${slug}` : `${window.location.origin.replace('/cms', '')}/form/view/${currentId}`);
@@ -420,10 +472,33 @@ export default function CreateFormPage() {
     const timer = setTimeout(async () => {
         if (!hasData) { setIsSaving(false); return; }
         try {
-            const body = { name: formData.name, title: formData.title, description: formData.description, theme, questions, bannerImage: theme.bannerImage };
-            if (currentId) { await apiRequest(`/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); } 
-            else if (isCurrentlySaving.current === false) { isCurrentlySaving.current = true; const res = await apiRequest("/forms", { method: "POST", body: JSON.stringify(body) }); const newId = res.data.id; setCurrentId(newId); window.history.replaceState(null, "", `/form/edit/${newId}`); setGeneratedLink(`${window.location.origin.replace('/cms', '')}/form/view/${newId}`); isCurrentlySaving.current = false; }
-        } catch (err) { console.error(err); } finally { setTimeout(() => setIsSaving(false), 800); }
+            const body = { 
+                name: formData.name, 
+                title: formData.title, 
+                description: formData.description, 
+                theme, 
+                questions, 
+                bannerImage: theme.bannerImage,
+                thumbnail: formData.thumbnail || ""
+            };
+            
+            if (currentId) { 
+                await apiRequest(`/forms/${currentId}`, { method: "PUT", body: JSON.stringify(body) }); 
+            } 
+            else if (isCurrentlySaving.current === false) { 
+                isCurrentlySaving.current = true; 
+                const res = await apiRequest("/forms", { method: "POST", body: JSON.stringify(body) }); 
+                const newId = res.data.id; 
+                setCurrentId(newId); 
+                window.history.replaceState(null, "", `/form/edit/${newId}`); 
+                setGeneratedLink(`${window.location.origin.replace('/cms', '')}/form/view/${newId}`); 
+                isCurrentlySaving.current = false; 
+            }
+        } catch (err) { 
+            console.error("Auto-save failed:", err); 
+        } finally { 
+            setTimeout(() => setIsSaving(false), 800); 
+        }
     }, 2500);
     return () => clearTimeout(timer);
   }, [formData, questions, theme, currentId, isPreview]);
@@ -535,7 +610,12 @@ export default function CreateFormPage() {
                             <div className="relative w-full max-w-[1000px] flex justify-center animate-fade-in">
                                 <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleBannerSelect} />
                                 <div className={`w-full h-[150px] md:h-[250px] rounded-[25px] md:rounded-[35px] overflow-hidden shrink-0 shadow-sm relative transition-all duration-500 ${!isPreview ? 'group cursor-pointer border-2 md:border-4 border-white/20 hover:border-white' : ''} ${isUploadingBanner ? 'blur-xl animate-pulse scale-95' : ''}`} style={{ backgroundColor: theme.accentColor }} onClick={(e) => { if (isPreview) return; e.stopPropagation(); fileInputRef.current.click(); }}>
-                                    <img src={theme.bannerImage} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                    <img 
+                                        src={theme.bannerImage} 
+                                        crossOrigin="anonymous"
+                                        alt="Banner" 
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                                    />
                                     {!isPreview && <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]"><div className="bg-rice text-mahogany px-4 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl font-bold shadow-2xl active:scale-95 transition-all flex items-center gap-2 md:gap-3 text-xs md:text-base"><img src="/assets/icons/cms-form/type-collection/add-image.svg" alt="" className="w-4 h-4 md:w-6 md:h-6" /><span>Change Header</span></div></div>}
                                 </div>
                             </div>

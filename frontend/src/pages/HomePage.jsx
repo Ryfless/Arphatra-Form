@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/api.js";
 import { useLanguage } from "@/lib/i18n.jsx";
 
 const tabs = [
+  { key: "all", label: "all" },
   { key: "today", label: "today" },
   { key: "yesterday", label: "yesterday" },
   { key: "2days", label: "2days" },
@@ -40,7 +41,7 @@ export default function HomePage() {
   const { t } = useLanguage();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [user, setUser] = useState(getUser()); // Change to state
-  const [activeTab, setActiveTab] = useState("today");
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "updatedAt", direction: "desc" });
@@ -48,7 +49,7 @@ export default function HomePage() {
   const [activeFormMenu, setActiveFormMenu] = useState(null);
   const [formToDelete, setFormToDelete] = useState(null);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
-  const [realForms, setRealForms] = useState({ today: [], yesterday: [], '2days': [] });
+  const [realForms, setRealForms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [layout, setLayout] = useState('list'); // 'list' or 'grid'
 
@@ -66,11 +67,7 @@ export default function HomePage() {
     if (!formToDelete) return;
     try {
         await apiRequest(`/forms/${formToDelete}`, { method: "DELETE" });
-        setRealForms(prev => ({
-            today: prev.today.filter(f => f.id !== formToDelete),
-            yesterday: prev.yesterday.filter(f => f.id !== formToDelete),
-            '2days': prev['2days'].filter(f => f.id !== formToDelete)
-        }));
+        setRealForms(prev => prev.filter(f => f.id !== formToDelete));
         setToast({ show: true, message: t("form_deleted"), type: "success" });
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
         setFormToDelete(null);
@@ -94,19 +91,7 @@ export default function HomePage() {
         ]);
 
         // Handle Forms
-        const grouped = { today: [], yesterday: [], '2days': [] };
-        const now = new Date();
-        const sortedForms = formsRes.data.sort((a, b) => 
-          new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
-        );
-        sortedForms.forEach(form => {
-            const formDate = new Date(form.updatedAt || form.createdAt);
-            const diffDays = Math.floor((now - formDate) / (1000 * 60 * 60 * 24));
-            if (diffDays === 0) grouped.today.push(form);
-            else if (diffDays === 1) grouped.yesterday.push(form);
-            else grouped['2days'].push(form);
-        });
-        setRealForms(grouped);
+        setRealForms(formsRes.data || []);
 
         // Handle Settings
         if (settingsRes.data?.display?.layout) {
@@ -121,11 +106,6 @@ export default function HomePage() {
     fetchInitialData();
   }, []);
 
-  const formsData = useMemo(() => {
-      if (isLoading) return { today: [], yesterday: [], '2days': [] };
-      return realForms;
-  }, [realForms, isLoading]);
-
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return t("greeting.morning");
@@ -139,10 +119,10 @@ export default function HomePage() {
   }, [user]);
 
   const hasForms = useMemo(() => {
-    return realForms.today.length > 0 || realForms.yesterday.length > 0 || realForms['2days'].length > 0;
+    return realForms.length > 0;
   }, [realForms]);
 
-  const formsList = useMemo(() => [...realForms.today, ...realForms.yesterday, ...realForms['2days']], [realForms]);
+  const formsList = useMemo(() => realForms, [realForms]);
 
   useEffect(() => {
     document.title = "Homepage - Arphatra";
@@ -163,21 +143,46 @@ export default function HomePage() {
   }, [isProfileMenuOpen, activeFormMenu]);
 
   const formsForTab = useMemo(() => {
-    let forms = [...(formsData[activeTab] || [])];
+    let filtered = [...realForms];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // 1. Filter by Tab
+    if (activeTab !== "all") {
+      filtered = filtered.filter(form => {
+        const formDate = new Date(form.updatedAt || form.createdAt);
+        formDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((now - formDate) / (1000 * 60 * 60 * 24));
+
+        if (activeTab === "today") return diffDays === 0;
+        if (activeTab === "yesterday") return diffDays === 1;
+        if (activeTab === "2days") return diffDays === 2;
+        return true;
+      });
+    }
+
+    // 2. Filter by Search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      forms = forms.filter((f) => f.name?.toLowerCase().includes(query) || f.title?.toLowerCase().includes(query));
+      filtered = filtered.filter((f) => f.name?.toLowerCase().includes(query) || f.title?.toLowerCase().includes(query));
     }
-    forms.sort((a, b) => {
+
+    // 3. Sort
+    filtered.sort((a, b) => {
       const key = sortConfig.key;
-      const valA = (a[key] || "").toString().toLowerCase();
-      const valB = b[key] || "".toString().toLowerCase();
+      let valA = a[key] || "";
+      let valB = b[key] || "";
+      
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
       if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
       if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
-    return forms;
-  }, [activeTab, formsData, searchQuery, sortConfig]);
+
+    return filtered;
+  }, [activeTab, realForms, searchQuery, sortConfig]);
 
   const handleSort = (key) => {
     setSortConfig((prev) => ({
@@ -350,28 +355,38 @@ export default function HomePage() {
                         {isLoading ? (
                             Array.from({ length: 5 }).map((_, i) => <SkeletonItem key={i} />)
                         ) : formsForTab.length === 0 ? (
-                            <>
-                                <div 
-                                    onClick={() => navigate("/form/create")}
-                                    className="stagger-item group/quick bg-mahogany/5 border-2 border-dashed border-mahogany/20 p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between cursor-pointer hover:bg-mahogany/10 hover:border-mahogany/40 transition-all mb-2"
-                                >
-                                    <div className="flex items-center gap-3 md:gap-4">
-                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-mahogany flex items-center justify-center shadow-md group-hover/quick:scale-110 transition-transform">
-                                            <img src="/assets/icons/cms-form/add.svg" alt="" className="w-4 h-4 md:w-5 md:h-5 invert" />
+                            <div className="flex flex-col h-full">
+                                {activeTab === "all" && (
+                                    <div 
+                                        onClick={() => navigate("/form/create")}
+                                        className="stagger-item group/quick bg-mahogany/5 border-2 border-dashed border-mahogany/20 p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between cursor-pointer hover:bg-mahogany/10 hover:border-mahogany/40 transition-all mb-6"
+                                    >
+                                        <div className="flex items-center gap-3 md:gap-4">
+                                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-mahogany flex items-center justify-center shadow-md group-hover/quick:scale-110 transition-transform">
+                                                <img src="/assets/icons/cms-form/add.svg" alt="" className="w-4 h-4 md:w-5 md:h-5 invert" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm md:text-lg font-bold text-mahogany">{t("ignite_project")}</span>
+                                                <span className="text-[10px] md:text-xs text-tobacco/60">{t("start_blank")}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm md:text-lg font-bold text-mahogany">{t("ignite_project")}</span>
-                                            <span className="text-[10px] md:text-xs text-tobacco/60">{t("start_blank")}</span>
+                                        <div className="bg-mahogany/10 px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold text-mahogany opacity-0 group-hover/quick:opacity-100 transition-opacity">
+                                            {t("create_now")}
                                         </div>
                                     </div>
-                                    <div className="bg-mahogany/10 px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold text-mahogany opacity-0 group-hover/quick:opacity-100 transition-opacity">
-                                        {t("create_now")}
+                                )}
+                                <div className="flex flex-col items-center justify-center flex-1 text-center p-8">
+                                    <div className="w-16 h-16 md:w-24 md:h-24 bg-mahogany/5 rounded-full flex items-center justify-center mb-4 opacity-20">
+                                        <img src="/assets/icons/homepage/doc-icon.svg" alt="" className="w-8 h-8 md:w-12 md:h-12" />
                                     </div>
+                                    <p className="text-lg md:text-xl font-bold text-mahogany/40 italic max-w-xs md:max-w-md">
+                                        {activeTab === "today" ? t("empty_today") : 
+                                         activeTab === "yesterday" ? t("empty_yesterday") :
+                                         activeTab === "2days" ? t("empty_2days") :
+                                         t("no_forms")}
+                                    </p>
                                 </div>
-                                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-40">
-                                    <p className="text-lg md:text-xl font-bold">{t("no_forms")}</p>
-                                </div>
-                            </>
+                            </div>
                         ) : (
                             formsForTab.map((form, idx) => {
                                 const isSelected = selectedRowId === form.id;
@@ -422,38 +437,45 @@ export default function HomePage() {
                             <p className="text-lg md:text-xl font-bold">No forms found</p>
                         </div>
                     ) : (
-                        formsForTab.map((form, idx) => (
-                            <div 
-                                key={form.id}
-                                onClick={() => navigate(`/form/edit/${form.id}`)}
-                                className="stagger-item flex flex-col gap-3 group cursor-pointer"
-                                style={{ animationDelay: `${idx * 0.05}s` }}
-                            >
-                                <div className="aspect-[4/3] rounded-[25px] md:rounded-[35px] bg-mahogany/5 border-2 border-mahogany/5 flex items-center justify-center relative overflow-hidden transition-all duration-300 hover:border-mahogany/20 hover:shadow-xl group-hover:-translate-y-1">
-                                    <img src="/assets/icons/homepage/doc-icon.svg" alt="" className="w-12 h-12 md:w-16 md:h-16 opacity-20" />
-                                    {/* Action Dot Overlay */}
-                                    <div className="absolute top-4 right-4 form-menu-container">
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); setActiveFormMenu(activeFormMenu === form.id ? null : form.id); }}
-                                            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <img src="/assets/icons/homepage/more-vertical.svg" alt="" className="w-4 h-4" />
-                                        </button>
-                                        {activeFormMenu === form.id && (
-                                            <div className="absolute right-0 top-full mt-2 w-40 md:w-48 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-mahogany/5 py-1 md:py-2 z-[150] text-mahogany" onClick={(e) => e.stopPropagation()}>
-                                                <button onClick={() => navigate(`/form/edit/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("edit")}</button>
-                                                <button onClick={() => window.open(form.slug ? `https://arphatra.web.app/f/${form.slug}` : `https://arphatra.web.app/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
-                                                <button onClick={() => setFormToDelete(form.id)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors text-sm md:text-base font-bold mt-1 border-t border-mahogany/5 border-none bg-transparent cursor-pointer">{t("delete")}</button>
-                                            </div>
+                        formsForTab.map((form, idx) => {
+                            const isMenuOpen = activeFormMenu === form.id;
+                            return (
+                                <div 
+                                    key={form.id}
+                                    onClick={() => navigate(`/form/edit/${form.id}`)}
+                                    className={`stagger-item flex flex-col gap-3 group cursor-pointer relative ${isMenuOpen ? "z-[100]" : "z-0"}`}
+                                    style={{ animationDelay: `${idx * 0.05}s` }}
+                                >
+                                    <div className="aspect-[4/3] rounded-[25px] md:rounded-[35px] bg-mahogany/5 border-2 border-mahogany/5 flex items-center justify-center relative transition-all duration-300 hover:border-mahogany/20 hover:shadow-xl group-hover:-translate-y-1 overflow-hidden">
+                                        {form.thumbnail ? (
+                                            <img src={form.thumbnail} alt="" className="w-full h-full object-cover opacity-90 transition-opacity group-hover:opacity-100" />
+                                        ) : (
+                                            <img src="/assets/icons/homepage/doc-icon.svg" alt="" className="w-12 h-12 md:w-16 md:h-16 opacity-20" />
                                         )}
+                                        {/* Action Dot Overlay */}
+                                        <div className="absolute top-4 right-4 form-menu-container">
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); setActiveFormMenu(isMenuOpen ? null : form.id); }}
+                                                className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <img src="/assets/icons/homepage/more-vertical.svg" alt="" className="w-4 h-4" />
+                                            </button>
+                                            {isMenuOpen && (
+                                                <div className="absolute right-0 top-full mt-2 w-40 md:w-48 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-mahogany/5 py-1 md:py-2 z-[150] text-mahogany" onClick={(e) => e.stopPropagation()}>
+                                                    <button onClick={() => navigate(`/form/edit/${form.id}`)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("edit")}</button>
+                                                    <button onClick={() => window.open(form.slug ? `https://arphatra.web.app/f/${form.slug}` : `https://arphatra.web.app/form/view/${form.id}`, '_blank')} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-mahogany/5 transition-colors text-sm md:text-base font-medium border-none bg-transparent cursor-pointer">{t("view_public")}</button>
+                                                    <button onClick={() => setFormToDelete(form.id)} className="w-full px-4 md:px-6 py-2 md:py-2.5 text-left hover:bg-red-50 text-red-600 transition-colors text-sm md:text-base font-bold mt-1 border-t border-mahogany/5 border-none bg-transparent cursor-pointer">{t("delete")}</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="px-2">
+                                        <p className="font-bold text-mahogany text-sm md:text-lg truncate">{form.name || "Untitled Form"}</p>
+                                        <p className="text-tobacco/60 text-[10px] md:text-xs font-medium">Edited {new Date(form.updatedAt || form.createdAt).toLocaleDateString()}</p>
                                     </div>
                                 </div>
-                                <div className="px-2">
-                                    <p className="font-bold text-mahogany text-sm md:text-lg truncate">{form.name || "Untitled Form"}</p>
-                                    <p className="text-tobacco/60 text-[10px] md:text-xs font-medium">Edited {new Date(form.updatedAt || form.createdAt).toLocaleDateString()}</p>
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             )}
