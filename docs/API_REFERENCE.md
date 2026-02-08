@@ -2,97 +2,136 @@
 
 Base URL: `https://asia-southeast1-pentataste-ff444.cloudfunctions.net/api` (Singapore Region)
 
-## Authentication
+All protected endpoints require an `Authorization: Bearer <token>` header.
 
-### Login
-`POST /auth/login`
-*   **Body:** `{ email, password }`
-*   **Response:** `{ token, user }`
+## 🔐 Authentication
 
 ### Register
 `POST /auth/register`
 *   **Body:** `{ fullName, email, password }`
-*   **Response:** `{ token, user }`
+*   **Response:** `{ success: true, message: "...", data: { token, user } }`
 
-### Google Login
+### Login
+`POST /auth/login`
+*   **Body:** `{ email, password }`
+*   **Response:** `{ success: true, message: "...", data: { token, user } }`
+
+### Google Auth
 `POST /auth/google-login`
-*   **Body:** `{ idToken }` (Didapat dari Firebase Client SDK)
-*   **Description:** Memverifikasi token Google, mencari/membuat user di Firestore, dan mengembalikan data profil lengkap.
-*   **Response:** `{ success: true, message: "...", data: { ...user, idToken } }`
+*   **Body:** `{ idToken }` (Obtained from Firebase Client SDK)
+*   **Description:** Verifies Google token and syncs profile with Firestore.
+*   **Response:** `{ success: true, data: { user, idToken } }`
+
+### Forgot Password
+`POST /auth/forgot-password`
+*   **Body:** `{ email }`
+*   **Description:** Sends a 6-digit OTP to the user's email.
+
+### Reset Password
+`POST /auth/reset-password`
+*   **Body:** `{ email, otp, newPassword }`
+*   **Description:** Resets the password if OTP matches.
 
 ---
 
-## Forms
+## 👤 User & Settings (Protected)
 
-### Get All Forms
+### Get Profile
+`GET /users/profile`
+*   **Response:** `{ status: "success", data: { uid, email, fullName, avatarUrl, createdAt } }`
+
+### Update Profile
+`PUT /users/profile`
+*   **Body:** `{ fullName, avatarUrl }` (Optional fields)
+*   **Response:** `{ status: "success", data: updatedUser }`
+
+### Get Settings
+`GET /users/settings`
+*   **Response:** `{ status: "success", data: { notifications, display, preferences } }`
+
+### Update Settings
+`PUT /users/settings`
+*   **Body:** `{ category, key, value }`
+*   **Example:** `{ "category": "display", "key": "language", "value": "Bahasa Indonesia" }`
+
+### Deactivate Account
+`POST /users/deactivate`
+*   **Description:** Temporarily disables the account.
+
+### Delete Account
+`DELETE /users/delete`
+*   **Description:** Permanently removes user, forms, and responses. **Irreversible.**
+
+---
+
+## 📝 Forms
+
+### Get All My Forms (Protected)
 `GET /forms`
-*   **Headers:** `Authorization: Bearer <token>`
-*   **Response:** `[ { id, title, createdAt, ... } ]`
+*   **Response:** `{ status: "success", data: [ FormObjects ] }`
 
-### Get Single Form
-`GET /forms/:formId`
-*   **Access:** Public (Supports UUID or Slug)
-*   **Response:** `{ id, title, questions, theme, slug, ... }`
-
-### Create Form
+### Create Form (Protected)
 `POST /forms`
-*   **Headers:** `Authorization: Bearer <token>`
 *   **Body:**
     ```json
     {
-      "title": "My Form",
+      "name": "Internal Form Name",
+      "title": "Public Form Title",
       "description": "...",
-      "questions": [...],
-      "theme": {...},
-      "slug": "custom-url-name"
+      "theme": { "backgroundColor": "...", "cardColor": "...", "accentColor": "...", "bannerImage": "..." },
+      "questions": [ ... ],
+      "slug": "custom-url",
+      "thumbnail": "https://storage..."
     }
     ```
-*   **Response:** `{ id, status: "success" }`
 
-### Update Form
+### Update Form (Protected)
 `PUT /forms/:formId`
-*   **Headers:** `Authorization: Bearer <token>`
-*   **Body:** (Sama seperti Create)
-*   **Response:** `{ message: "Form updated" }`
+*   **Body:** Same as Create Form (All fields optional).
 
-### Delete Form
+### Delete Form (Protected)
 `DELETE /forms/:formId`
-*   **Headers:** `Authorization: Bearer <token>`
-*   **Response:** `{ message: "Form deleted" }`
+*   **Description:** Deletes the form and all associated responses.
 
-### Check Slug Availability
-`GET /forms/check-slug?slug=my-custom-url`
-*   **Headers:** `Authorization: Bearer <token>`
+### Check Slug Availability (Protected)
+`GET /forms/check-slug?slug=my-url`
 *   **Response:** `{ status: "success", available: true/false }`
+
+### View Form (Public)
+`GET /forms/:formId`
+*   **Access:** Supports UUID or Slug.
+*   **Response:** `{ status: "success", data: FormObject }`
 
 ---
 
-## Responses
+## 📊 Responses
 
-### Submit Response
+### Submit Response (Public)
 `POST /forms/:formId/submit`
-*   **Access:** Public (Supports UUID or Slug)
 *   **Body:**
     ```json
     {
       "answers": {
-        "questionId_1": "Answer Value",
-        "questionId_2": ["Option A", "Option B"]
+        "question_id": "value"
       }
     }
     ```
 
-### Get Form Responses (Analytics)
+### Get Analytics (Protected)
 `GET /forms/:formId/responses`
-*   **Headers:** `Authorization: Bearer <token>`
-*   **Response:** `[ { id, answers, submittedAt } ]`
+*   **Response:** `{ status: "success", data: [ ResponseObjects ] }`
 
 ---
 
-## Uploads
+## 📁 Assets & Utilities
 
-### Upload File
+### Upload File (Protected)
 `POST /upload`
-*   **Headers:** `Authorization: Bearer <token>`
-*   **Body:** `FormData` (Key: `file`)
-*   **Response:** `{ data: { url: "https://storage..." } }`
+*   **Body:** `FormData` with key `file`.
+*   **Description:** Specifically optimized for Cloud Functions (uses Busboy).
+*   **Response:** `{ status: "success", data: { url: "..." } }`
+
+### Contact Support (Public)
+`POST /contact`
+*   **Body:** `{ name, email, message }`
+*   **Description:** Sends a support email to Arphatra admins.
